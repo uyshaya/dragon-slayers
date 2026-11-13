@@ -2,24 +2,32 @@
 
 A turn-based pixel-art RPG made with Java Swing.
 
-Object-Oriented Programming · Engr. Violdan E. Bayocot · University of San Jose - Recoletos
+- **Course:** Object-Oriented Programming, University of San Jose - Recoletos
+- **Instructor:** Engr. Violdan E. Bayocot
+- **Submitted:** TBA
+- **Team:** Shaniah Uy (GitHub: [@uyshaya](https://github.com/uyshaya)), solo project
 
-**Author:** Shaniah Uy · **Submitted:** TBA
-
-## Run it
+## How to build and run
 
 You need JDK 17 or newer, and Maven.
 
-```
-git clone <repo-url>
-cd dragon-slayers
-mvn clean package
-java -jar target/dragon-slayers.jar
-```
+1. Clone the repository.
+   ```
+   git clone https://github.com/uyshaya/dragon-slayers.git
+   cd dragon-slayers
+   ```
+2. Build the JAR.
+   ```
+   mvn clean package
+   ```
+3. Run the game.
+   ```
+   java -jar target/dragon-slayers.jar
+   ```
 
-Or open the folder in IntelliJ IDEA and run `com.dragonslayers.Main`.
+You can also open the folder in IntelliJ IDEA and run `com.dragonslayers.Main`.
 
-## How to play
+## Controls and gameplay
 
 Coming soon.
 
@@ -36,35 +44,94 @@ src/main/java/com/dragonslayers/
 └── assets/        sprite loading
 ```
 
-## Requirements checklist
+## Feature checklist
 
-| Requirement | Where |
-|---|---|
-| Abstract class | |
-| Two interfaces, two implementers each | |
-| Inheritance three levels deep | |
-| Private fields, overriding, overloading | |
-| Polymorphic battle loop | |
-| Two collection types | |
-| Generic class or method | |
-| Comparator sort and Stream API | |
-| Two custom exceptions | |
-| Safe file I/O, no empty catch blocks | |
-| Text and binary saves, three slots | |
-| Corrupted or missing saves handled | |
-| Three or more screens (CardLayout) | |
-| Two or more layout managers | |
-| Inner class, anonymous class, and lambda handlers | |
-| Custom `paintComponent` drawing | |
-| Javadoc, naming, small classes, no magic numbers | |
+Each row is a requirement from Chapter III of the spec.
 
-## Credits
+### §1 Object-oriented architecture
 
-**Who did what:** Solo project by Shaniah Uy.
+| Done | Requirement | Where |
+|---|---|---|
+| ✓ | Abstract class | `GameCharacter`, `Hero`, `Enemy` |
+| | Two interfaces, each implemented by two or more classes | |
+| ✓ | Inheritance at least two levels deep | `GameCharacter` → `Hero` → `Warrior` |
+| ✓ | All instance fields private | `GameCharacter` |
+| ✓ | Method overriding with `@Override` | `getClassName()` in each hero and enemy |
+| | Method overloading | |
+| | Polymorphic battle loop over a supertype collection | |
 
-**Art and assets:** To be added.
+### §2 Collections and generics
 
-**AI use:** Claude helped summarize the spec, fill in the README, and review the starter files. Claude also updated the `pom.xml` setup so `mvn clean package` builds a runnable JAR.
+| Done | Requirement | Where |
+|---|---|---|
+| | Two collection types from `java.util` | |
+| | Generic class or method | |
+| | Sorting with a `Comparator` | |
+| | Non-trivial Stream API use | |
+
+### §3 Exception handling
+
+| Done | Requirement | Where |
+|---|---|---|
+| | Two custom exceptions | |
+| | File I/O in try-with-resources or try-catch-finally | |
+| | No empty catch blocks | |
+| | Failed user actions show a message, not a crash | |
+
+### §4 File input and output
+
+| Done | Requirement | Where |
+|---|---|---|
+| | Human-readable text saves | |
+| | Binary saves with `ObjectOutputStream` | |
+| | Corrupted or missing saves handled | |
+| | Three save slots | |
+
+### §5 Graphical user interface
+
+| Done | Requirement | Where |
+|---|---|---|
+| | Swing only | |
+| | Three or more screens | |
+| | Two or more layout managers | |
+| | Inner class, anonymous class, and lambda event handlers | |
+| | Custom `paintComponent` with `Graphics2D` | |
+| | Nearest-neighbour sprite scaling | |
+
+### §6 Code quality
+
+| Done | Requirement | Where |
+|---|---|---|
+| | Javadoc on all classes and public methods | |
+| | Naming conventions | |
+| | No class over about 300 lines | |
+| ✓ | No magic numbers | `GameBalance` |
+| ✓ | Logical packages | `model`, `view`, `controller`, `io`, `exceptions`, `assets` |
+
+## Who did what
+
+**Shaniah Uy (GitHub: [@uyshaya](https://github.com/uyshaya))** - solo project.
+
+- Wrote the character hierarchy in `com.dragonslayers.model`: the abstract `GameCharacter` with its stats, level, and defending flag (`defend()`, `stopDefending()`), and the abstract `Hero` and `Enemy` classes.
+- Wrote the hero classes `Warrior`, `Mage`, `Archer`, and `Cleric`, and the enemy classes `Goblin`, `Skeleton`, and `DragonBoss`, each with a name-only constructor and its own `getClassName()`.
+- Created the `GameBalance` constants class and the `Attackable`, `Healable`, `Saveable`, and `Usable` interfaces.
+- Set up the project structure and the `Main` entry point.
+
+## AI usage disclosure
+
+I used Claude for the following:
+
+- Summarized the project spec.
+- Drafted the README template and later reorganized it to match the spec's required sections.
+- Set up `pom.xml` so `mvn clean package` builds a runnable JAR for Java 17.
+- Wrote the hero and enemy stat constants in `GameBalance` and suggested their values.
+- Reviewed the classes I wrote and pointed out errors.
+
+I wrote all other code myself.
+
+## External assets and attribution
+
+No assets yet. Each external asset will be listed here with its source URL, author, and license.
 
 ## Known issues
 
