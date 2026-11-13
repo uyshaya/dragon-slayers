@@ -116,6 +116,9 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote the hero classes `Warrior`, `Mage`, `Archer`, and `Cleric`, and the enemy classes `Goblin`, `Skeleton`, and `DragonBoss`, each with a name-only constructor and its own `getClassName()`.
 - Created the `GameBalance` constants class and the `Attackable`, `Healable`, `Saveable`, and `Usable` interfaces.
 - Set up the project structure and the `Main` entry point.
+- Wrote the combat methods in `GameCharacter`: `takeDamage()`, `heal()`, `isKnockedOut()`, `attack()`, and the `calculateDamage()` and `rollRandomDamage()` helpers.
+- Wrote `toSaveFormat()` in `Hero`.
+- Wrote `useAbility()` for each hero and enemy (Power Strike, Fireball, Double Shot, Heal, Dirty Trick, Bone Guard, and Flame Breath), with each ability's value as a `private static final` constant in its own class.
 
 ## AI usage disclosure
 
@@ -126,6 +129,10 @@ I used Claude for the following:
 - Set up `pom.xml` so `mvn clean package` builds a runnable JAR for Java 17.
 - Wrote the hero and enemy stat constants in `GameBalance` and suggested their values.
 - Reviewed the classes I wrote and pointed out errors.
+- Added the Javadoc comments for the classes, interfaces, and methods in `com.dragonslayers.model`.
+- Suggested the damage formula (attack, minus half the target's defense, plus a random amount, with a minimum of 1) and the values of its constants in `GameBalance`.
+- Suggested the single-target abilities Fireball (ignores defense), Dirty Trick, and Flame Breath (triple damage), and the shared `calculateDamage()` and `rollRandomDamage()` helpers.
+- Suggested the hero text save format and writing `toSaveFormat()` once in `Hero`.
 
 I wrote all other code myself.
 

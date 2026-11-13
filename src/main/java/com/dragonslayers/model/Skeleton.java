@@ -1,7 +1,16 @@
 package com.dragonslayers.model;
 
+/**
+ * A slow enemy with good defense.
+ * <p>Ability: Bone Guard, defends this turn.</p>
+ */
 public class Skeleton extends Enemy {
 
+    /**
+     * Creates a skeleton with its starting stats from {@link GameBalance}.
+     *
+     * @param name the character's name
+     */
     public Skeleton(String name) {
         super(name,
                 GameBalance.SKELETON_MAX_HP,
@@ -11,13 +20,25 @@ public class Skeleton extends Enemy {
         );
     }
 
+    /**
+     * Returns the display name of this class.
+     *
+     * @return the class name
+     */
     @Override
     public String getClassName() {
         return "Skeleton";
     }
 
+    /**
+     * Uses Bone Guard.
+     *
+     * @param target not used, since Bone Guard only affects the Skeleton
+     * @return always 0, since Bone Guard deals no damage
+     */
     @Override
     public int useAbility(GameCharacter target) {
+        defend();
         return 0;
     }
 }

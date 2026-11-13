@@ -1,11 +1,21 @@
 package com.dragonslayers.model;
 
+/**
+ * All game-balance numbers in one place.
+ *
+ * <p>Other model classes use these constants instead of raw numbers.</p>
+ */
 public final class GameBalance {
 
+    /** Prevents creating instances. This class only holds constants. */
     private GameBalance() {
     }
 
     static final int STARTING_LEVEL = 1;
+    static final int MIN_DAMAGE = 1;
+    static final int DEFENSE_DIVISOR = 2;
+    static final int RANDOM_DAMAGE_MAX = 4;
+    static final int DEFEND_DAMAGE_DIVISOR = 2;
 
     // ----- Heroes -----
 

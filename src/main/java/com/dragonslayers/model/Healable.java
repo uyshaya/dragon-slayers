@@ -1,7 +1,15 @@
 package com.dragonslayers.model;
 
+/**
+ * Something that can get back hit points.
+ */
 public interface Healable {
 
-    void heal (int amount);
+    /**
+     * Restores hit points.
+     *
+     * @param amount how many hit points to restore
+     */
+    void heal(int amount);
 
 }

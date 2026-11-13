@@ -1,11 +1,14 @@
 package com.dragonslayers.model;
 
+/**
+ * Something that can be written to a text save file.
+ */
 public interface Saveable {
 
     /**
-     * Serves as a marker for text persistence
+     * Returns this object as one line of plain text for a save file.
      *
-     * @return the save formatted text
+     * @return the save line
      */
     String toSaveFormat();
 
