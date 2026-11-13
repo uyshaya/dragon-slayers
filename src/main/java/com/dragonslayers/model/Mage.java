@@ -2,8 +2,13 @@ package com.dragonslayers.model;
 
 public class Mage extends Hero {
 
-    public Mage(String name, int maxHp, int attack, int defense, int speed) {
-        super(name, maxHp, attack, defense, speed);
+    public Mage(String name) {
+        super(name,
+                GameBalance.MAGE_MAX_HP,
+                GameBalance.MAGE_ATTACK,
+                GameBalance.MAGE_DEFENSE,
+                GameBalance.MAGE_SPEED
+        );
     }
 
     @Override

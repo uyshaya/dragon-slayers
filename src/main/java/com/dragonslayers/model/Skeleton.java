@@ -2,8 +2,13 @@ package com.dragonslayers.model;
 
 public class Skeleton extends Enemy {
 
-    public Skeleton(String name, int maxHp, int attack, int defense, int speed) {
-        super(name, maxHp, attack, defense, speed);
+    public Skeleton(String name) {
+        super(name,
+                GameBalance.SKELETON_MAX_HP,
+                GameBalance.SKELETON_ATTACK,
+                GameBalance.SKELETON_DEFENSE,
+                GameBalance.SKELETON_SPEED
+        );
     }
 
     @Override

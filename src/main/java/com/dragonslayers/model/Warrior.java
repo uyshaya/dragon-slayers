@@ -2,8 +2,13 @@ package com.dragonslayers.model;
 
 public class Warrior extends Hero {
 
-    public Warrior(String name, int maxHp, int attack, int defense, int speed) {
-        super(name, maxHp, attack, defense, speed);
+    public Warrior(String name) {
+        super(name,
+                GameBalance.WARRIOR_MAX_HP,
+                GameBalance.WARRIOR_ATTACK,
+                GameBalance.WARRIOR_DEFENSE,
+                GameBalance.WARRIOR_SPEED
+        );
     }
 
     @Override

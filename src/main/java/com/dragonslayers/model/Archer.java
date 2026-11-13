@@ -2,8 +2,13 @@ package com.dragonslayers.model;
 
 public class Archer extends Hero {
 
-    public Archer(String name, int maxHp, int attack, int defense, int speed) {
-        super(name, maxHp, attack, defense, speed);
+    public Archer(String name) {
+        super(name,
+                GameBalance.ARCHER_MAX_HP,
+                GameBalance.ARCHER_ATTACK,
+                GameBalance.ARCHER_DEFENSE,
+                GameBalance.ARCHER_SPEED
+        );
     }
 
     @Override

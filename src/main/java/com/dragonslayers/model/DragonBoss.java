@@ -2,8 +2,13 @@ package com.dragonslayers.model;
 
 public class DragonBoss extends Enemy {
 
-    public DragonBoss(String name, int maxHp, int attack, int defense, int speed) {
-        super(name, maxHp, attack, defense, speed);
+    public DragonBoss(String name) {
+        super(name,
+                GameBalance.DRAGON_BOSS_MAX_HP,
+                GameBalance.DRAGON_BOSS_ATTACK,
+                GameBalance.DRAGON_BOSS_DEFENSE,
+                GameBalance.DRAGON_BOSS_SPEED
+        );
     }
 
     @Override

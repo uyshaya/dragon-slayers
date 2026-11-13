@@ -29,8 +29,7 @@ public abstract class GameCharacter {
         this.attack = attack;
         this.defense = defense;
         this.speed = speed;
-        // TODO: update this when game constants are available
-        this.level = 1;
+        this.level = GameBalance.STARTING_LEVEL;
         this.isDefending = false;
     }
 
