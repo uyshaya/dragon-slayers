@@ -8,11 +8,13 @@ Object-Oriented Programming · Engr. Violdan E. Bayocot · University of San Jos
 
 ## Run it
 
-You need JDK 25 and Maven.
+You need JDK 17 or newer, and Maven.
 
 ```
-mvn compile
-java -cp target/classes com.dragonslayers.Main
+git clone <repo-url>
+cd dragon-slayers
+mvn clean package
+java -jar target/dragon-slayers.jar
 ```
 
 Or open the folder in IntelliJ IDEA and run `com.dragonslayers.Main`.
@@ -62,7 +64,7 @@ src/main/java/com/dragonslayers/
 
 **Art and assets:** To be added.
 
-**AI use:** Claude helped summarize the spec, fill in the README, and review the starter files.
+**AI use:** Claude helped summarize the spec, fill in the README, and review the starter files. Claude also updated the `pom.xml` setup so `mvn clean package` builds a runnable JAR.
 
 ## Known issues
 
