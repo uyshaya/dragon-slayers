@@ -65,7 +65,7 @@ Each row is a requirement from Chapter III of the spec.
 | Done | Requirement | Where |
 |---|---|---|
 | | Two collection types from `java.util` | |
-| | Generic class or method | |
+| ✓ | Generic class or method | `Party<T extends GameCharacter>` |
 | | Sorting with a `Comparator` | |
 | | Non-trivial Stream API use | |
 
@@ -119,6 +119,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote the combat methods in `GameCharacter`: `takeDamage()`, `heal()`, `isKnockedOut()`, `attack()`, and the `calculateDamage()` and `rollRandomDamage()` helpers.
 - Wrote `toSaveFormat()` in `Hero`.
 - Wrote `useAbility()` for each hero and enemy (Power Strike, Fireball, Double Shot, Heal, Dirty Trick, Bone Guard, and Flame Breath), with each ability's value as a `private static final` constant in its own class.
+- Wrote the generic `Party<T extends GameCharacter>` class with `addMember()`, `getAliveMembers()`, `isDefeated()`, and a read-only `getMembers()`.
 
 ## AI usage disclosure
 
@@ -133,6 +134,7 @@ I used Claude for the following:
 - Suggested the damage formula (attack, minus half the target's defense, plus a random amount, with a minimum of 1) and the values of its constants in `GameBalance`.
 - Suggested the single-target abilities Fireball (ignores defense), Dirty Trick, and Flame Breath (triple damage), and the shared `calculateDamage()` and `rollRandomDamage()` helpers.
 - Suggested the hero text save format and writing `toSaveFormat()` once in `Hero`.
+- Suggested the `Party` class design, including returning a read-only list from `getMembers()`.
 
 I wrote all other code myself.
 
