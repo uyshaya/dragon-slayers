@@ -122,7 +122,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote the generic `Party<T extends GameCharacter>` class with `addMember()`, `getAliveMembers()`, `isDefeated()`, and a read-only `getMembers()`.
 - Wrote `takeTurn()` and `shouldUseAbility()` in `Enemy`, and the every-third-turn Flame Breath in `DragonBoss`.
 - Wrote the `Battle` class with the combat log, round counter, win checks, and turn order sorted by speed with a `Comparator`.
-- Wrote `BattleEngine` with the hero actions (attack, ability, defend) and the enemy phase.
+- Wrote `BattleEngine` with the hero actions (attack, ability, defend, and `heroUseItem()`) and the enemy phase.
 - Wrote the item hierarchy (`Item`, `Potion`, `Equipment`, `Weapon`, `Armor`, `KeyItem`) and `equipWeapon()`/`equipArmor()` in `Hero`, which replace the old bonus instead of stacking it.
 - Wrote `Inventory` with two `HashMap`s (items and counts by name), the overloaded `addItem()`, `useItem()`, and the stream query `getUsableItemNames()`.
 

@@ -1,9 +1,6 @@
 package com.dragonslayers.controller;
 
-import com.dragonslayers.model.Battle;
-import com.dragonslayers.model.Enemy;
-import com.dragonslayers.model.GameCharacter;
-import com.dragonslayers.model.Hero;
+import com.dragonslayers.model.*;
 
 /**
  * The engine that controls a {@code Battle}.
@@ -12,13 +9,17 @@ public class BattleEngine {
 
     private final Battle battle;
 
+    private final Inventory inventory;
+
     /**
      * Creates an engine for the given battle.
      *
-     * @param battle the battle to control
+     * @param battle    the battle to control
+     * @param inventory the party's shared inventory
      */
-    public BattleEngine(Battle battle) {
+    public BattleEngine(Battle battle, Inventory inventory) {
         this.battle = battle;
+        this.inventory = inventory;
     }
 
     /**
@@ -53,6 +54,19 @@ public class BattleEngine {
     public void heroDefend(Hero hero) {
         hero.defend();
         battle.addLog(hero.getName() + " defends");
+    }
+
+    /**
+     * Uses an item from the inventory on the target.
+     *
+     * @param hero     the hero using the item
+     * @param itemName the item's name
+     * @param target   the character to use it on
+     */
+    public void heroUseItem(Hero hero, String itemName, GameCharacter target) {
+        hero.stopDefending();
+        inventory.useItem(itemName, target);
+        battle.addLog(hero.getName() + " uses " + itemName + " on " + target.getName());
     }
 
     /**
