@@ -66,7 +66,7 @@ Each row is a requirement from Chapter III of the spec.
 |---|---|---|
 | | Two collection types from `java.util` | |
 | ✓ | Generic class or method | `Party<T extends GameCharacter>` |
-| | Sorting with a `Comparator` | |
+| ✓ | Sorting with a `Comparator` | `Battle` (`BY_SPEED`) |
 | | Non-trivial Stream API use | |
 
 ### §3 Exception handling
@@ -121,6 +121,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `useAbility()` for each hero and enemy (Power Strike, Fireball, Double Shot, Heal, Dirty Trick, Bone Guard, and Flame Breath), with each ability's value as a `private static final` constant in its own class.
 - Wrote the generic `Party<T extends GameCharacter>` class with `addMember()`, `getAliveMembers()`, `isDefeated()`, and a read-only `getMembers()`.
 - Wrote `takeTurn()` and `shouldUseAbility()` in `Enemy`, and the every-third-turn Flame Breath in `DragonBoss`.
+- Wrote the `Battle` class with the combat log, round counter, win checks, and turn order sorted by speed with a `Comparator`.
 
 ## AI usage disclosure
 
@@ -135,7 +136,7 @@ I used Claude for the following:
 - Suggested the damage formula (attack, minus half the target's defense, plus a random amount, with a minimum of 1) and the values of its constants in `GameBalance`.
 - Suggested the single-target abilities Fireball (ignores defense), Dirty Trick, and Flame Breath (triple damage), and the shared `calculateDamage()` and `rollRandomDamage()` helpers.
 - Suggested the hero text save format and writing `toSaveFormat()` once in `Hero`.
-- Suggested the `Party` class design, including returning a read-only list from `getMembers()`.
+- Suggested the `Party` and `Battle` class designs, including returning a read-only list from `getMembers()` and sorting each side's turn order with a stream and a `Comparator`.
 - Suggested the enemy turn design: a random alive target, a 1 in 3 ability chance, and the boss using Flame Breath every third turn by overriding `shouldUseAbility()`.
 
 I wrote all other code myself.
