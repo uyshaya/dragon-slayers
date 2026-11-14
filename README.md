@@ -120,6 +120,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `toSaveFormat()` in `Hero`.
 - Wrote `useAbility()` for each hero and enemy (Power Strike, Fireball, Double Shot, Heal, Dirty Trick, Bone Guard, and Flame Breath), with each ability's value as a `private static final` constant in its own class.
 - Wrote the generic `Party<T extends GameCharacter>` class with `addMember()`, `getAliveMembers()`, `isDefeated()`, and a read-only `getMembers()`.
+- Wrote `takeTurn()` and `shouldUseAbility()` in `Enemy`, and the every-third-turn Flame Breath in `DragonBoss`.
 
 ## AI usage disclosure
 
@@ -135,6 +136,7 @@ I used Claude for the following:
 - Suggested the single-target abilities Fireball (ignores defense), Dirty Trick, and Flame Breath (triple damage), and the shared `calculateDamage()` and `rollRandomDamage()` helpers.
 - Suggested the hero text save format and writing `toSaveFormat()` once in `Hero`.
 - Suggested the `Party` class design, including returning a read-only list from `getMembers()`.
+- Suggested the enemy turn design: a random alive target, a 1 in 3 ability chance, and the boss using Flame Breath every third turn by overriding `shouldUseAbility()`.
 
 I wrote all other code myself.
 

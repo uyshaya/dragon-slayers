@@ -8,6 +8,10 @@ public class DragonBoss extends Enemy {
 
     private static final int FLAME_BREATH_MULTIPLIER = 3;
 
+    private static final int FLAME_BREATH_TURN = 3;
+
+    private int turnCount = 0;
+
     /**
      * Creates a dragon boss with its starting stats from {@link GameBalance}.
      *
@@ -43,5 +47,17 @@ public class DragonBoss extends Enemy {
         int damage = calculateDamage(target) * FLAME_BREATH_MULTIPLIER;
         target.takeDamage(damage);
         return damage;
+    }
+
+    /**
+     * Uses Flame Breath every third turn.
+     *
+     * @return true on every third turn
+     */
+    @Override
+    protected boolean shouldUseAbility() {
+        turnCount++;
+
+        return turnCount % FLAME_BREATH_TURN == 0;
     }
 }
