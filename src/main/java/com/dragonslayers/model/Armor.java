@@ -1,5 +1,7 @@
 package com.dragonslayers.model;
 
+import com.dragonslayers.exceptions.InvalidActionException;
+
 /**
  * Armor that raises defense.
  */
@@ -16,14 +18,17 @@ public class Armor extends Equipment {
     }
 
     /**
-     * Equips this item on the target if it is a hero.
+     * Equips this item on the target.
      *
      * @param target the hero to equip
+     * @throws InvalidActionException if the target is not a hero
      */
     @Override
     public void useOn(GameCharacter target) {
         if (target instanceof Hero hero) {
             hero.equipArmor(this);
+        } else {
+            throw new InvalidActionException("Only heroes can equip " +getName());
         }
     }
 

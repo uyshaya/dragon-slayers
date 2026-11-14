@@ -62,10 +62,11 @@ public class BattleEngine {
      * @param hero     the hero using the item
      * @param itemName the item's name
      * @param target   the character to use it on
+     * @throws com.dragonslayers.exceptions.InvalidActionException if the item is missing, not usable, or the target is invalid
      */
     public void heroUseItem(Hero hero, String itemName, GameCharacter target) {
-        hero.stopDefending();
         inventory.useItem(itemName, target);
+        hero.stopDefending();
         battle.addLog(hero.getName() + " uses " + itemName + " on " + target.getName());
     }
 

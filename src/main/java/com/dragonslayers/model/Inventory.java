@@ -1,5 +1,7 @@
 package com.dragonslayers.model;
 
+import com.dragonslayers.exceptions.InvalidActionException;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -65,15 +67,22 @@ public class Inventory {
 
     /**
      * Uses one of an item on the target, then removes it.
-     * <p>Does nothing if the party has none or the item is not usable.</p>
      *
      * @param name   the item's name
      * @param target the character to use it on
+     * @throws InvalidActionException if the item is missing or not usable
      */
     public void useItem(String name, GameCharacter target) {
-        if (items.get(name) instanceof Usable usable) {
+        final Item item = items.get(name);
+        if (item == null) {
+            throw new InvalidActionException("No " + name + " in the inventory");
+        }
+
+        if (item instanceof Usable usable) {
             usable.useOn(target);
             removeOne(name);
+        } else {
+            throw new InvalidActionException(name + " cannot be used");
         }
     }
 
