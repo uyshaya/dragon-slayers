@@ -126,6 +126,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote the item hierarchy (`Item`, `Potion`, `Equipment`, `Weapon`, `Armor`, `KeyItem`) and `equipWeapon()`/`equipArmor()` in `Hero`, which replace the old bonus instead of stacking it.
 - Wrote `Inventory` with two `HashMap`s (items and counts by name), the overloaded `addItem()`, `useItem()`, and the stream query `getUsableItemNames()`.
 - Wrote the custom exceptions `SaveNotFoundException`, `CorruptedSaveException`, and `InvalidActionException`, and made `Inventory.useItem()`, `Weapon.useOn()`, and `Armor.useOn()` throw `InvalidActionException` for missing items, unusable items, and non-hero targets.
+- Wrote `GameState` (hero party, inventory, and encounter number) with two constructors, one for a new game and one for loading, and made `GameCharacter`, `Item`, `Party`, `Inventory`, and `GameState` implement `Serializable`.
 
 ## AI usage disclosure
 
@@ -144,6 +145,7 @@ I used Claude for the following:
 - Suggested the enemy turn design: a random alive target, a 1 in 3 ability chance, and the boss using Flame Breath every third turn by overriding `shouldUseAbility()`.
 - Suggested a simpler version of the spec's item hierarchy (no `Consumable` or `Antidote`), equipping through `useOn()`, and storing equipped items in `Hero`.
 - Suggested the three custom exceptions, which ones are checked or unchecked, and where to throw `InvalidActionException`.
+- Suggested the `GameState` design and which classes need `Serializable` for binary saves.
 
 I wrote all other code myself.
 

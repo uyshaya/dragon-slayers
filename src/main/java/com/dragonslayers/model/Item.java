@@ -1,9 +1,11 @@
 package com.dragonslayers.model;
 
+import java.io.Serializable;
+
 /**
  * Something the party can carry in its inventory.
  */
-public abstract class Item implements Saveable {
+public abstract class Item implements Serializable, Saveable {
 
     private final String name;
 

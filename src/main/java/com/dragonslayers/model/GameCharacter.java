@@ -1,5 +1,6 @@
 package com.dragonslayers.model;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import static com.dragonslayers.model.GameBalance.*;
@@ -10,7 +11,7 @@ import static com.dragonslayers.model.GameBalance.*;
  * <p>Holds the stats every character has and the shared combat rules:
  * attacking, taking damage, healing, and defending.</p>
  */
-public abstract class GameCharacter implements Attackable, Healable {
+public abstract class GameCharacter implements Serializable, Attackable, Healable {
 
     // Every character should share one final random
     private static final Random RANDOM = new Random();

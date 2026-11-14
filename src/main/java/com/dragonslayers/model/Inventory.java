@@ -2,6 +2,7 @@ package com.dragonslayers.model;
 
 import com.dragonslayers.exceptions.InvalidActionException;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Inventory of items.
  */
-public class Inventory {
+public class Inventory implements Serializable {
 
     private static final int DEFAULT_COUNT = 1;
 

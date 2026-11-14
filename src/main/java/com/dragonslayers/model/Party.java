@@ -1,5 +1,6 @@
 package com.dragonslayers.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
  *
  * @param <T> the type of character in this party
  */
-public class Party<T extends GameCharacter> {
+public class Party<T extends GameCharacter> implements Serializable {
 
     private final List<T> members = new ArrayList<>();
 
