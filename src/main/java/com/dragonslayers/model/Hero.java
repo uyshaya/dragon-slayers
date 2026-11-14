@@ -7,6 +7,10 @@ package com.dragonslayers.model;
  */
 public abstract class Hero extends GameCharacter implements Saveable {
 
+    private Weapon weapon;
+
+    private Armor armor;
+
     /**
      * Creates a hero with the given stats.
      *
@@ -21,6 +25,24 @@ public abstract class Hero extends GameCharacter implements Saveable {
     }
 
     /**
+     * Returns the equipped weapon.
+     *
+     * @return the weapon, or null if none is equipped
+     */
+    public Weapon getWeapon() {
+        return weapon;
+    }
+
+    /**
+     * Returns the equipped armor.
+     *
+     * @return the armor, or null if none is equipped
+     */
+    public Armor getArmor() {
+        return armor;
+    }
+
+    /**
      * Returns this hero as one line for a text save file.
      *
      * @return the save line, for example {@code Hero=Warrior,Aria,1,95}
@@ -32,4 +54,21 @@ public abstract class Hero extends GameCharacter implements Saveable {
                 "," + this.getLevel() +
                 "," + this.getHp();
     }
+
+    void equipWeapon(Weapon newWeapon) {
+        if (weapon != null) {
+            setAttack(getAttack() - weapon.getBonus());
+        }
+        this.weapon = newWeapon;
+        setAttack(getAttack() + newWeapon.getBonus());
+    }
+
+    void equipArmor(Armor newArmor) {
+        if (armor != null) {
+            setDefense(getDefense() - armor.getBonus());
+        }
+        this.armor = newArmor;
+        setDefense(getDefense() + newArmor.getBonus());
+    }
+
 }

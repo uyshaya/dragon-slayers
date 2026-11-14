@@ -53,7 +53,7 @@ Each row is a requirement from Chapter III of the spec.
 | Done | Requirement | Where |
 |---|---|---|
 | ✓ | Abstract class | `GameCharacter`, `Hero`, `Enemy` |
-| | Two interfaces, each implemented by two or more classes | |
+| ✓ | Two interfaces, each implemented by two or more classes | `Saveable` (`Hero`, items), `Usable` (`Potion`, `Weapon`, `Armor`) |
 | ✓ | Inheritance at least two levels deep | `GameCharacter` → `Hero` → `Warrior` |
 | ✓ | All instance fields private | `GameCharacter` |
 | ✓ | Method overriding with `@Override` | `getClassName()` in each hero and enemy |
@@ -123,6 +123,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `takeTurn()` and `shouldUseAbility()` in `Enemy`, and the every-third-turn Flame Breath in `DragonBoss`.
 - Wrote the `Battle` class with the combat log, round counter, win checks, and turn order sorted by speed with a `Comparator`.
 - Wrote `BattleEngine` with the hero actions (attack, ability, defend) and the enemy phase.
+- Wrote the item hierarchy (`Item`, `Potion`, `Equipment`, `Weapon`, `Armor`, `KeyItem`) and `equipWeapon()`/`equipArmor()` in `Hero`, which replace the old bonus instead of stacking it.
 
 ## AI usage disclosure
 
@@ -139,6 +140,7 @@ I used Claude for the following:
 - Suggested the hero text save format and writing `toSaveFormat()` once in `Hero`.
 - Suggested the `Party`, `Battle`, and `BattleEngine` class designs, including returning a read-only list from `getMembers()`, sorting each side's turn order with a stream and a `Comparator`, and ending a defend at the start of the character's next turn.
 - Suggested the enemy turn design: a random alive target, a 1 in 3 ability chance, and the boss using Flame Breath every third turn by overriding `shouldUseAbility()`.
+- Suggested a simpler version of the spec's item hierarchy (no `Consumable` or `Antidote`), equipping through `useOn()`, and storing equipped items in `Hero`.
 
 I wrote all other code myself.
 
