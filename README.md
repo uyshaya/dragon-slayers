@@ -58,7 +58,7 @@ Each row is a requirement from Chapter III of the spec.
 | ✓ | All instance fields private | `GameCharacter` |
 | ✓ | Method overriding with `@Override` | `getClassName()` in each hero and enemy |
 | | Method overloading | |
-| | Polymorphic battle loop over a supertype collection | |
+| ✓ | Polymorphic battle loop over a supertype collection | `BattleEngine.runEnemyTurns()` |
 
 ### §2 Collections and generics
 
@@ -122,6 +122,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote the generic `Party<T extends GameCharacter>` class with `addMember()`, `getAliveMembers()`, `isDefeated()`, and a read-only `getMembers()`.
 - Wrote `takeTurn()` and `shouldUseAbility()` in `Enemy`, and the every-third-turn Flame Breath in `DragonBoss`.
 - Wrote the `Battle` class with the combat log, round counter, win checks, and turn order sorted by speed with a `Comparator`.
+- Wrote `BattleEngine` with the hero actions (attack, ability, defend) and the enemy phase.
 
 ## AI usage disclosure
 
@@ -132,11 +133,11 @@ I used Claude for the following:
 - Set up `pom.xml` so `mvn clean package` builds a runnable JAR for Java 17.
 - Wrote the hero and enemy stat constants in `GameBalance` and suggested their values.
 - Reviewed the classes I wrote and pointed out errors.
-- Added the Javadoc comments for the classes, interfaces, and methods in `com.dragonslayers.model`.
+- Added Javadoc comments to most classes, interfaces, and methods.
 - Suggested the damage formula (attack, minus half the target's defense, plus a random amount, with a minimum of 1) and the values of its constants in `GameBalance`.
 - Suggested the single-target abilities Fireball (ignores defense), Dirty Trick, and Flame Breath (triple damage), and the shared `calculateDamage()` and `rollRandomDamage()` helpers.
 - Suggested the hero text save format and writing `toSaveFormat()` once in `Hero`.
-- Suggested the `Party` and `Battle` class designs, including returning a read-only list from `getMembers()` and sorting each side's turn order with a stream and a `Comparator`.
+- Suggested the `Party`, `Battle`, and `BattleEngine` class designs, including returning a read-only list from `getMembers()`, sorting each side's turn order with a stream and a `Comparator`, and ending a defend at the start of the character's next turn.
 - Suggested the enemy turn design: a random alive target, a 1 in 3 ability chance, and the boss using Flame Breath every third turn by overriding `shouldUseAbility()`.
 
 I wrote all other code myself.
