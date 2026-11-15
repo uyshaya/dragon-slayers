@@ -74,7 +74,7 @@ Each row is a requirement from Chapter III of the spec.
 | Done | Requirement | Where |
 |---|---|---|
 | ✓ | Two custom exceptions | `SaveNotFoundException`, `CorruptedSaveException`, `InvalidActionException` |
-| | File I/O in try-with-resources or try-catch-finally | |
+| ✓ | File I/O in try-with-resources or try-catch-finally | `BinarySaveManager`, `TextSaveManager` |
 | | No empty catch blocks | |
 | | Failed user actions show a message, not a crash | |
 
@@ -82,10 +82,10 @@ Each row is a requirement from Chapter III of the spec.
 
 | Done | Requirement | Where |
 |---|---|---|
-| | Human-readable text saves | |
-| | Binary saves with `ObjectOutputStream` | |
-| | Corrupted or missing saves handled | |
-| | Three save slots | |
+| ✓ | Human-readable text saves | `TextSaveManager` (`saves/slot1.txt` to `slot3.txt`) |
+| ✓ | Binary saves with `ObjectOutputStream` | `BinarySaveManager` |
+| ✓ | Corrupted or missing saves handled | `SaveNotFoundException`, `CorruptedSaveException` in `load()` of both save managers |
+| ✓ | Three save slots | `SaveManager.SLOT_COUNT` |
 
 ### §5 Graphical user interface
 
@@ -127,6 +127,8 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `Inventory` with two `HashMap`s (items and counts by name), the overloaded `addItem()`, `useItem()`, and the stream query `getUsableItemNames()`.
 - Wrote the custom exceptions `SaveNotFoundException`, `CorruptedSaveException`, and `InvalidActionException`, and made `Inventory.useItem()`, `Weapon.useOn()`, and `Armor.useOn()` throw `InvalidActionException` for missing items, unusable items, and non-hero targets.
 - Wrote `GameState` (hero party, inventory, and encounter number) with two constructors, one for a new game and one for loading, and made `GameCharacter`, `Item`, `Party`, `Inventory`, and `GameState` implement `Serializable`.
+- Wrote the `SaveManager` interface and `BinarySaveManager`, which saves and loads a `GameState` in 3 slots with try-with-resources and turns missing or damaged files into `SaveNotFoundException` and `CorruptedSaveException`.
+- Wrote `TextSaveManager`, which saves the encounter, heroes with their equipped weapons and armor, and items with counts as `key=value` lines, and `createHero()`/`createItem()` to rebuild them, plus `restore()` in `GameCharacter` to set a loaded hero's level and HP with a range check.
 
 ## AI usage disclosure
 
@@ -146,6 +148,8 @@ I used Claude for the following:
 - Suggested a simpler version of the spec's item hierarchy (no `Consumable` or `Antidote`), equipping through `useOn()`, and storing equipped items in `Hero`.
 - Suggested the three custom exceptions, which ones are checked or unchecked, and where to throw `InvalidActionException`.
 - Suggested the `GameState` design and which classes need `Serializable` for binary saves.
+- Suggested the `SaveManager` interface and the `BinarySaveManager` save and load code, including the multi-catch that wraps read errors in `CorruptedSaveException`.
+- Suggested the `TextSaveManager` file format, the `restore()` method, and the parsing approach, then helped fix the `load()` loop and renamed its variables to make it easier to read, as I requested.
 
 I wrote all other code myself.
 
@@ -155,4 +159,4 @@ No assets yet. Each external asset will be listed here with its source URL, auth
 
 ## Known issues
 
-None yet.
+- Hero and item names cannot contain `,` or `=`, because the text save uses them as separators.

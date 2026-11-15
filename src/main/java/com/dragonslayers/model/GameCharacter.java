@@ -256,4 +256,19 @@ public abstract class GameCharacter implements Serializable, Attackable, Healabl
         return isDefending;
     }
 
+    /**
+     * Sets the level and HP from a save file.
+     *
+     * @param level the saved level
+     * @param hp    the saved hit points
+     * @throws IllegalArgumentException if the level is below the starting level or the HP is out of range
+     */
+    public void restore(int level, int hp) {
+        if (level < GameBalance.STARTING_LEVEL || hp < 0 || hp > maxHp) {
+            throw new IllegalArgumentException("Invalid level or HP");
+        }
+        this.level = level;
+        this.hp = hp;
+    }
+
 }

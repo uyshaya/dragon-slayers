@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class GameState implements Serializable {
 
-    private static final int FIRST_ENCOUNTER = 1;
+    public static final int FIRST_ENCOUNTER = 1;
 
     private final Party<Hero> heroes;
 
