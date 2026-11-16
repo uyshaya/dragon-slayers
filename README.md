@@ -76,7 +76,7 @@ Each row is a requirement from Chapter III of the spec.
 | ✓ | Two custom exceptions | `SaveNotFoundException`, `CorruptedSaveException`, `InvalidActionException` |
 | ✓ | File I/O in try-with-resources or try-catch-finally | `BinarySaveManager`, `TextSaveManager` |
 | ✓ | No empty catch blocks | save managers rethrow as custom exceptions; `GameController.loadGame()` shows a message |
-| | Failed user actions show a message, not a crash | |
+| ✓ | Failed user actions show a message, not a crash | `BattlePanel` (invalid actions), `CharacterSelectPanel` (bad names), `GameController.loadGame()` (missing or damaged saves) |
 
 ### §4 File input and output
 
@@ -92,9 +92,9 @@ Each row is a requirement from Chapter III of the spec.
 | Done | Requirement | Where |
 |---|---|---|
 | ✓ | Swing only | `view` package (`JFrame`, `JPanel`, `JButton`, `JOptionPane`) |
-| | Three or more screens | |
+| ✓ | Three or more screens | `MainMenuPanel`, `CharacterSelectPanel`, `BattlePanel` |
 | ✓ | Two or more layout managers | `CardLayout` in `GameFrame`; `BorderLayout`, `GridLayout`, `FlowLayout` in `MainMenuPanel` |
-| | Inner class, anonymous class, and lambda event handlers | |
+| ✓ | Inner class, anonymous class, and lambda event handlers | inner `ActionButtonListener` in `BattlePanel`, anonymous class in `CharacterSelectPanel`, lambdas in `MainMenuPanel` |
 | | Custom `paintComponent` with `Graphics2D` | |
 | | Nearest-neighbour sprite scaling | |
 
@@ -133,6 +133,7 @@ Each row is a requirement from Chapter III of the spec.
 - Added `getAbilityName()` to every character and used it in the combat log lines in `BattleEngine` and `Enemy.takeTurn()`, and wrote `HeroFactory`, which creates a hero from its class name and is now used by `TextSaveManager`.
 - Started `CharacterSelectPanel` (the layout, the class cards read from `HeroFactory`, the anonymous class listener on each Choose button, and the party label built with a stream).
 - Wrote `EncounterFactory` with five encounters of increasing difficulty ending with the boss, added hero turn tracking to `BattleEngine` (`getCurrentHero()`, `startRound()`, `endHeroTurn()`), and added `abilityTargetsAllies()` to `Hero`, overridden in `Cleric`.
+- Started `BattlePanel` (the inner class `ActionButtonListener`, the generic method `chooseTarget()`, and `startBattle()`) and added `startEncounter()` to `GameController`.
 
 ## AI usage disclosure
 
@@ -158,6 +159,7 @@ I used Claude for the following:
 - Suggested `getAbilityName()` and moving hero creation into `HeroFactory`, and pointed out that the enemy log line said "uses" even on normal attacks.
 - Finished `CharacterSelectPanel` at my request (the name checks with warning messages, the Clear, Back, and Start buttons, and the card layout), and added `showMainMenu()`, `newGame()`, and `startGame()` to `GameController`.
 - Suggested `EncounterFactory`, the hero turn tracking in `BattleEngine`, and `abilityTargetsAllies()`, pointed out that `endHeroTurn()` restarted the round after every action, and added the Javadoc for these.
+- Finished `BattlePanel` at my request (the layout, the ability and item actions, the status and log display, and the Javadoc), and added `battleEnded()` and the starting potions to `GameController`.
 
 I wrote all other code myself.
 
