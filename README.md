@@ -75,7 +75,7 @@ Each row is a requirement from Chapter III of the spec.
 |---|---|---|
 | ✓ | Two custom exceptions | `SaveNotFoundException`, `CorruptedSaveException`, `InvalidActionException` |
 | ✓ | File I/O in try-with-resources or try-catch-finally | `BinarySaveManager`, `TextSaveManager` |
-| | No empty catch blocks | |
+| ✓ | No empty catch blocks | save managers rethrow as custom exceptions; `GameController.loadGame()` shows a message |
 | | Failed user actions show a message, not a crash | |
 
 ### §4 File input and output
@@ -91,9 +91,9 @@ Each row is a requirement from Chapter III of the spec.
 
 | Done | Requirement | Where |
 |---|---|---|
-| | Swing only | |
+| ✓ | Swing only | `view` package (`JFrame`, `JPanel`, `JButton`, `JOptionPane`) |
 | | Three or more screens | |
-| | Two or more layout managers | |
+| ✓ | Two or more layout managers | `CardLayout` in `GameFrame`; `BorderLayout`, `GridLayout`, `FlowLayout` in `MainMenuPanel` |
 | | Inner class, anonymous class, and lambda event handlers | |
 | | Custom `paintComponent` with `Graphics2D` | |
 | | Nearest-neighbour sprite scaling | |
@@ -129,6 +129,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `GameState` (hero party, inventory, and encounter number) with two constructors, one for a new game and one for loading, and made `GameCharacter`, `Item`, `Party`, `Inventory`, and `GameState` implement `Serializable`.
 - Wrote the `SaveManager` interface and `BinarySaveManager`, which saves and loads a `GameState` in 3 slots with try-with-resources and turns missing or damaged files into `SaveNotFoundException` and `CorruptedSaveException`.
 - Wrote `TextSaveManager`, which saves the encounter, heroes with their equipped weapons and armor, and items with counts as `key=value` lines, and `createHero()`/`createItem()` to rebuild them, plus `restore()` in `GameCharacter` to set a loaded hero's level and HP with a range check.
+- Wrote `GameFrame` (the window, with a `CardLayout`, `addScreen()`, `showScreen()`, and the screen-name constants) and `GameController` (`start()`, and `loadGame()` with error dialogs), and changed `Main` to start the controller.
 
 ## AI usage disclosure
 
@@ -150,6 +151,7 @@ I used Claude for the following:
 - Suggested the `GameState` design and which classes need `Serializable` for binary saves.
 - Suggested the `SaveManager` interface and the `BinarySaveManager` save and load code, including the multi-catch that wraps read errors in `CorruptedSaveException`.
 - Suggested the `TextSaveManager` file format, the `restore()` method, and the parsing approach, then helped fix the `load()` loop and renamed its variables to make it easier to read, as I requested.
+- Suggested the `GameFrame` and `GameController` designs, and wrote `MainMenuPanel` (the title, the three buttons with lambda listeners, and the save slot dialog) at my request.
 
 I wrote all other code myself.
 
