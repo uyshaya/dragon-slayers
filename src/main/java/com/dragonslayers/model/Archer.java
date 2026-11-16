@@ -47,4 +47,9 @@ public class Archer extends Hero {
         }
         return damage;
     }
+
+    @Override
+    public String getAbilityName() {
+        return "Double Shot";
+    }
 }

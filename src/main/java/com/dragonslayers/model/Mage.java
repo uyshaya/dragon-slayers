@@ -42,4 +42,9 @@ public class Mage extends Hero {
         target.takeDamage(damage);
         return damage;
     }
+
+    @Override
+    public String getAbilityName() {
+        return "Fireball";
+    }
 }

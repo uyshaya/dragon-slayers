@@ -91,7 +91,7 @@ public class TextSaveManager implements SaveManager {
                     case ENCOUNTER_KEY -> encounter = Integer.parseInt(value);
                     case HERO_KEY -> {
                         String[] heroDetails = value.split(",");
-                        Hero hero = createHero(heroDetails[0], heroDetails[1]);
+                        Hero hero = HeroFactory.create(heroDetails[0], heroDetails[1]);
                         int level = Integer.parseInt(heroDetails[2]);
                         int hp = Integer.parseInt(heroDetails[3]);
                         hero.restore(level, hp);
@@ -137,24 +137,6 @@ public class TextSaveManager implements SaveManager {
             throw new InvalidActionException("Slot must be " + FIRST_SLOT + " to " + SLOT_COUNT);
         }
         return new File(SAVE_FOLDER, "slot" + slot + FILE_EXTENSION);
-    }
-
-    /**
-     * Creates a hero from its class name.
-     *
-     * @param className the class name, for example {@code Warrior}
-     * @param name      the hero's name
-     * @return the new hero
-     * @throws CorruptedSaveException if the class name is unknown
-     */
-    private Hero createHero(String className, String name) throws CorruptedSaveException {
-        return switch (className) {
-            case "Warrior" -> new Warrior(name);
-            case "Mage" -> new Mage(name);
-            case "Archer" -> new Archer(name);
-            case "Cleric" -> new Cleric(name);
-            default -> throw new CorruptedSaveException("Unknown hero class: " + className);
-        };
     }
 
     /**

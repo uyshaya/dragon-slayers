@@ -43,7 +43,7 @@ public class BattleEngine {
     public void heroAbility(Hero hero, GameCharacter target) {
         hero.stopDefending();
         int amount = hero.useAbility(target);
-        battle.addLog(hero.getName() + " uses ability on " + target.getName() + " for " + amount);
+        battle.addLog(hero.getName() + " uses " + hero.getAbilityName() + " on " + target.getName() + " for " + amount);
     }
 
     /**

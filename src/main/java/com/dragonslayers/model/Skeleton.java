@@ -41,4 +41,9 @@ public class Skeleton extends Enemy {
         defend();
         return 0;
     }
+
+    @Override
+    public String getAbilityName() {
+        return "Bone Guard";
+    }
 }

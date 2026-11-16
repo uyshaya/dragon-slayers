@@ -72,6 +72,13 @@ public abstract class GameCharacter implements Serializable, Attackable, Healabl
     public abstract int useAbility(GameCharacter target);
 
     /**
+     * Returns the ability name of this character, such as "Power Strike".
+     *
+     * @return the ability name
+     */
+    public abstract String getAbilityName();
+
+    /**
      * Starts defending, so damage taken is reduced until the next turn.
      */
     public void defend() {

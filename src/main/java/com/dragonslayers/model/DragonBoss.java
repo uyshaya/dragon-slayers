@@ -49,6 +49,11 @@ public class DragonBoss extends Enemy {
         return damage;
     }
 
+    @Override
+    public String getAbilityName() {
+        return "Flame Breath";
+    }
+
     /**
      * Uses Flame Breath every third turn.
      *

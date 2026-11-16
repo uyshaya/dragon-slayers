@@ -44,4 +44,9 @@ public class Warrior extends Hero {
         target.takeDamage(damage);
         return damage;
     }
+
+    @Override
+    public String getAbilityName() {
+        return "Power Strike";
+    }
 }

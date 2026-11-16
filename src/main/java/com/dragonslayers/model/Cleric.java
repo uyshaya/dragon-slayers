@@ -44,4 +44,9 @@ public class Cleric extends Hero {
         target.heal(HEAL_AMOUNT);
         return target.getHp() - currentHp;
     }
+
+    @Override
+    public String getAbilityName() {
+        return "Heal";
+    }
 }

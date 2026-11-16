@@ -41,4 +41,9 @@ public class Goblin extends Enemy {
         target.stopDefending();
         return attack(target);
     }
+
+    @Override
+    public String getAbilityName() {
+        return "Dirty Trick";
+    }
 }

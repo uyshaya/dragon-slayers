@@ -47,10 +47,11 @@ public abstract class Enemy extends GameCharacter {
         int damage;
         if (shouldUseAbility()) {
             damage = useAbility(targetHero);
+            return getName() + " uses " + getAbilityName() + " on " + targetHero.getName() + " for " + damage;
         } else {
             damage = attack(targetHero);
         }
 
-        return getName() + " hits " + targetHero.getName() + " for " + damage;
+        return getName() + " attacks " + targetHero.getName() + " for " + damage;
     }
 }

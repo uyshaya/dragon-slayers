@@ -130,6 +130,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote the `SaveManager` interface and `BinarySaveManager`, which saves and loads a `GameState` in 3 slots with try-with-resources and turns missing or damaged files into `SaveNotFoundException` and `CorruptedSaveException`.
 - Wrote `TextSaveManager`, which saves the encounter, heroes with their equipped weapons and armor, and items with counts as `key=value` lines, and `createHero()`/`createItem()` to rebuild them, plus `restore()` in `GameCharacter` to set a loaded hero's level and HP with a range check.
 - Wrote `GameFrame` (the window, with a `CardLayout`, `addScreen()`, `showScreen()`, and the screen-name constants) and `GameController` (`start()`, and `loadGame()` with error dialogs), and changed `Main` to start the controller.
+- Added `getAbilityName()` to every character and used it in the combat log lines in `BattleEngine` and `Enemy.takeTurn()`, and wrote `HeroFactory`, which creates a hero from its class name and is now used by `TextSaveManager`.
 
 ## AI usage disclosure
 
@@ -152,6 +153,7 @@ I used Claude for the following:
 - Suggested the `SaveManager` interface and the `BinarySaveManager` save and load code, including the multi-catch that wraps read errors in `CorruptedSaveException`.
 - Suggested the `TextSaveManager` file format, the `restore()` method, and the parsing approach, then helped fix the `load()` loop and renamed its variables to make it easier to read, as I requested.
 - Suggested the `GameFrame` and `GameController` designs, and wrote `MainMenuPanel` (the title, the three buttons with lambda listeners, and the save slot dialog) at my request.
+- Suggested `getAbilityName()` and moving hero creation into `HeroFactory`, and pointed out that the enemy log line said "uses" even on normal attacks.
 
 I wrote all other code myself.
 
