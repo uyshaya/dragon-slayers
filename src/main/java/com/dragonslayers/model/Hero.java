@@ -71,4 +71,14 @@ public abstract class Hero extends GameCharacter implements Saveable {
         setDefense(getDefense() + newArmor.getBonus());
     }
 
+    /**
+     * Returns whether this hero's ability targets allies instead of enemies.
+     * Most abilities target enemies.
+     *
+     * @return true if the ability targets allies
+     */
+    public boolean abilityTargetsAllies() {
+        return false;
+    }
+
 }

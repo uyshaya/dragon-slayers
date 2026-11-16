@@ -45,8 +45,23 @@ public class Cleric extends Hero {
         return target.getHp() - currentHp;
     }
 
+    /**
+     * Returns the ability name.
+     *
+     * @return ability name
+     */
     @Override
     public String getAbilityName() {
         return "Heal";
+    }
+
+    /**
+     * Returns if ability targets allies.
+     *
+     * @return true, because Heal targets an ally
+     */
+    @Override
+    public boolean abilityTargetsAllies() {
+        return true;
     }
 }

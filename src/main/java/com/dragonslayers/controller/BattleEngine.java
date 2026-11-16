@@ -2,6 +2,8 @@ package com.dragonslayers.controller;
 
 import com.dragonslayers.model.*;
 
+import java.util.List;
+
 /**
  * The engine that controls a {@code Battle}.
  */
@@ -10,6 +12,10 @@ public class BattleEngine {
     private final Battle battle;
 
     private final Inventory inventory;
+
+    private List<Hero> heroOrder;
+
+    private int heroIndex;
 
     /**
      * Creates an engine for the given battle.
@@ -20,6 +26,7 @@ public class BattleEngine {
     public BattleEngine(Battle battle, Inventory inventory) {
         this.battle = battle;
         this.inventory = inventory;
+        startRound();
     }
 
     /**
@@ -32,6 +39,7 @@ public class BattleEngine {
         hero.stopDefending();
         int damage = hero.attack(target);
         battle.addLog(hero.getName() + " attacks " + target.getName() + " for " + damage);
+        endHeroTurn();
     }
 
     /**
@@ -44,6 +52,7 @@ public class BattleEngine {
         hero.stopDefending();
         int amount = hero.useAbility(target);
         battle.addLog(hero.getName() + " uses " + hero.getAbilityName() + " on " + target.getName() + " for " + amount);
+        endHeroTurn();
     }
 
     /**
@@ -54,6 +63,7 @@ public class BattleEngine {
     public void heroDefend(Hero hero) {
         hero.defend();
         battle.addLog(hero.getName() + " defends");
+        endHeroTurn();
     }
 
     /**
@@ -68,13 +78,14 @@ public class BattleEngine {
         inventory.useItem(itemName, target);
         hero.stopDefending();
         battle.addLog(hero.getName() + " uses " + itemName + " on " + target.getName());
+        endHeroTurn();
     }
 
     /**
      * Runs every alive enemy's turn, fastest first, then starts the next round.
      * <p>Stops early if the battle ends.</p>
      */
-    public void runEnemyTurns() {
+    private void runEnemyTurns() {
         for (Enemy enemy : battle.getEnemyTurnOrder()) {
             if (battle.isOver()) {
                 return;
@@ -83,5 +94,38 @@ public class BattleEngine {
             battle.addLog(enemy.takeTurn(battle.getHeroes()));
         }
         battle.nextRound();
+    }
+
+    /**
+     * Starts a hero phase: sorts the alive heroes by speed and goes back to the first one.
+     */
+    private void startRound() {
+        heroOrder = battle.getHeroTurnOrder();
+        heroIndex = 0;
+    }
+
+    /**
+     * Returns the hero whose turn it is.
+     * <p>Check {@code battle.isOver()} first. After the battle ends there is no current hero.</p>
+     *
+     * @return the current hero
+     */
+    public Hero getCurrentHero() {
+        return heroOrder.get(heroIndex);
+    }
+
+    /**
+     * Moves to the next hero. After the last hero, runs the enemy phase and starts a new round,
+     * unless the battle is over.
+     */
+    private void endHeroTurn() {
+        heroIndex++;
+        if (battle.isOver() || heroIndex < heroOrder.size()) {
+            return;
+        }
+        runEnemyTurns();
+        if (!battle.isOver()) {
+            startRound();
+        }
     }
 }

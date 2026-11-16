@@ -132,6 +132,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `GameFrame` (the window, with a `CardLayout`, `addScreen()`, `showScreen()`, and the screen-name constants) and `GameController` (`start()`, and `loadGame()` with error dialogs), and changed `Main` to start the controller.
 - Added `getAbilityName()` to every character and used it in the combat log lines in `BattleEngine` and `Enemy.takeTurn()`, and wrote `HeroFactory`, which creates a hero from its class name and is now used by `TextSaveManager`.
 - Started `CharacterSelectPanel` (the layout, the class cards read from `HeroFactory`, the anonymous class listener on each Choose button, and the party label built with a stream).
+- Wrote `EncounterFactory` with five encounters of increasing difficulty ending with the boss, added hero turn tracking to `BattleEngine` (`getCurrentHero()`, `startRound()`, `endHeroTurn()`), and added `abilityTargetsAllies()` to `Hero`, overridden in `Cleric`.
 
 ## AI usage disclosure
 
@@ -156,6 +157,7 @@ I used Claude for the following:
 - Suggested the `GameFrame` and `GameController` designs, and wrote `MainMenuPanel` (the title, the three buttons with lambda listeners, and the save slot dialog) at my request.
 - Suggested `getAbilityName()` and moving hero creation into `HeroFactory`, and pointed out that the enemy log line said "uses" even on normal attacks.
 - Finished `CharacterSelectPanel` at my request (the name checks with warning messages, the Clear, Back, and Start buttons, and the card layout), and added `showMainMenu()`, `newGame()`, and `startGame()` to `GameController`.
+- Suggested `EncounterFactory`, the hero turn tracking in `BattleEngine`, and `abilityTargetsAllies()`, pointed out that `endHeroTurn()` restarted the round after every action, and added the Javadoc for these.
 
 I wrote all other code myself.
 
