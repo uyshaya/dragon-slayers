@@ -134,6 +134,7 @@ Each row is a requirement from Chapter III of the spec.
 - Started `CharacterSelectPanel` (the layout, the class cards read from `HeroFactory`, the anonymous class listener on each Choose button, and the party label built with a stream).
 - Wrote `EncounterFactory` with five encounters of increasing difficulty ending with the boss, added hero turn tracking to `BattleEngine` (`getCurrentHero()`, `startRound()`, `endHeroTurn()`), and added `abilityTargetsAllies()` to `Hero`, overridden in `Cleric`.
 - Started `BattlePanel` (the inner class `ActionButtonListener`, the generic method `chooseTarget()`, and `startBattle()`) and added `startEncounter()` to `GameController`.
+- Wrote `InventoryPanel` (the `BorderLayout` with the title, Party, and Inventory areas, and `showState()`) and added `showInventory()` to `GameController`, so the screen appears after each win and after loading a save.
 
 ## AI usage disclosure
 
@@ -160,6 +161,8 @@ I used Claude for the following:
 - Finished `CharacterSelectPanel` at my request (the name checks with warning messages, the Clear, Back, and Start buttons, and the card layout), and added `showMainMenu()`, `newGame()`, and `startGame()` to `GameController`.
 - Suggested `EncounterFactory`, the hero turn tracking in `BattleEngine`, and `abilityTargetsAllies()`, pointed out that `endHeroTurn()` restarted the round after every action, and added the Javadoc for these.
 - Finished `BattlePanel` at my request (the layout, the ability and item actions, the status and log display, and the Javadoc), and added `battleEnded()` and the starting potions to `GameController`.
+- Suggested the steps for `InventoryPanel` and its `GameController` hooks, and reviewed my code for each step.
+- Finished `refresh()` and `describe()` in `InventoryPanel` at my request (the hero text, the null checks for equipment, and the inventory stream), and fixed the Party scroll pane.
 
 I wrote all other code myself.
 

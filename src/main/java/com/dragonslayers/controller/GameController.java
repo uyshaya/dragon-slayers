@@ -5,10 +5,7 @@ import com.dragonslayers.exceptions.SaveNotFoundException;
 import com.dragonslayers.io.BinarySaveManager;
 import com.dragonslayers.io.SaveManager;
 import com.dragonslayers.model.*;
-import com.dragonslayers.view.BattlePanel;
-import com.dragonslayers.view.CharacterSelectPanel;
-import com.dragonslayers.view.GameFrame;
-import com.dragonslayers.view.MainMenuPanel;
+import com.dragonslayers.view.*;
 
 import javax.swing.*;
 
@@ -29,6 +26,8 @@ public class GameController {
 
     private BattlePanel battlePanel;
 
+    private InventoryPanel inventoryPanel;
+
     private CharacterSelectPanel characterSelectPanel;
 
     /**
@@ -37,9 +36,11 @@ public class GameController {
     public void start() {
         characterSelectPanel = new CharacterSelectPanel(this);
         battlePanel = new BattlePanel(this);
+        inventoryPanel = new InventoryPanel(this);
         gameFrame.addScreen(new MainMenuPanel(this), GameFrame.MAIN_MENU);
         gameFrame.addScreen(characterSelectPanel, GameFrame.CHARACTER_SELECT);
         gameFrame.addScreen(battlePanel, GameFrame.BATTLE);
+        gameFrame.addScreen(inventoryPanel, GameFrame.INVENTORY);
         gameFrame.showScreen(GameFrame.MAIN_MENU);
         gameFrame.setVisible(true);
     }
@@ -80,8 +81,7 @@ public class GameController {
         try {
             gameState = binarySaveManager.load(slot);
             JOptionPane.showMessageDialog(gameFrame, "Loaded slot " + slot);
-            startEncounter();
-            // later: show the inventory/status screen
+            showInventory();
         } catch (SaveNotFoundException | CorruptedSaveException e) {
             JOptionPane.showMessageDialog(gameFrame, e.getMessage(), "Load failed", JOptionPane.ERROR_MESSAGE);
         }
@@ -120,7 +120,14 @@ public class GameController {
         }
         gameState.nextEncounter();
         JOptionPane.showMessageDialog(gameFrame, "Battle won! Next: encounter " + gameState.getEncounter() + ".");
-        startEncounter();
+        showInventory();
     }
 
+    /**
+     * Shows the inventory and status screen for the current game.
+     */
+    private void showInventory() {
+        inventoryPanel.showState(gameState);
+        gameFrame.showScreen(GameFrame.INVENTORY);
+    }
 }
