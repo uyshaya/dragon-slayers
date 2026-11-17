@@ -1,5 +1,6 @@
 package com.dragonslayers.view;
 
+import com.dragonslayers.assets.SpriteLoader;
 import com.dragonslayers.controller.GameController;
 import com.dragonslayers.model.Hero;
 import com.dragonslayers.model.HeroFactory;
@@ -26,6 +27,8 @@ public class CharacterSelectPanel extends JPanel {
     private static final int PADDING = 20;
 
     private static final float TITLE_FONT_SIZE = 28f;
+
+    private static final int CARD_SPRITE_SCALE = 6;
 
     private final List<Hero> chosenHeroes = new ArrayList<>();
 
@@ -77,7 +80,7 @@ public class CharacterSelectPanel extends JPanel {
     }
 
     /**
-     * Creates the card for one hero class, with its stats, ability, and a Choose button.
+     * Creates the card for one hero class, with its stats, ability, sprite, and a Choose button.
      *
      * @param className the hero class, for example {@code Warrior}
      * @return the card panel
@@ -102,6 +105,7 @@ public class CharacterSelectPanel extends JPanel {
         JPanel card = new JPanel(new BorderLayout());
         card.setBorder(BorderFactory.createTitledBorder(sample.getClassName()));
         card.add(stats, BorderLayout.NORTH);
+        card.add(new JLabel(SpriteLoader.getIcon(className, CARD_SPRITE_SCALE)), BorderLayout.CENTER);
         card.add(chooseButton, BorderLayout.SOUTH);
         return card;
     }

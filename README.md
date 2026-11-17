@@ -92,11 +92,11 @@ Each row is a requirement from Chapter III of the spec.
 | Done | Requirement | Where |
 |---|---|---|
 | ✓ | Swing only | `view` package (`JFrame`, `JPanel`, `JButton`, `JOptionPane`) |
-| ✓ | Three or more screens | `MainMenuPanel`, `CharacterSelectPanel`, `BattlePanel` |
+| ✓ | Three or more screens | `MainMenuPanel`, `CharacterSelectPanel`, `BattlePanel`, `InventoryPanel`, `EndPanel`, switched with `CardLayout` |
 | ✓ | Two or more layout managers | `CardLayout` in `GameFrame`; `BorderLayout`, `GridLayout`, `FlowLayout` in `MainMenuPanel` |
 | ✓ | Inner class, anonymous class, and lambda event handlers | inner `ActionButtonListener` in `BattlePanel`, anonymous class in `CharacterSelectPanel`, lambdas in `MainMenuPanel` |
-| | Custom `paintComponent` with `Graphics2D` | |
-| | Nearest-neighbour sprite scaling | |
+| ✓ | Custom `paintComponent` with `Graphics2D` | `BattleCanvas` draws the floor tiles, sprites, and health bars |
+| ✓ | Nearest-neighbour sprite scaling | `VALUE_INTERPOLATION_NEAREST_NEIGHBOR` in `BattleCanvas`, `Image.SCALE_REPLICATE` in `SpriteLoader.getIcon()` |
 
 ### §6 Code quality
 
@@ -163,12 +163,34 @@ I used Claude for the following:
 - Finished `BattlePanel` at my request (the layout, the ability and item actions, the status and log display, and the Javadoc), and added `battleEnded()` and the starting potions to `GameController`.
 - Suggested the steps for `InventoryPanel` and its `GameController` hooks, and reviewed my code for each step.
 - Finished `refresh()` and `describe()` in `InventoryPanel` at my request (the hero text, the null checks for equipment, and the inventory stream), and fixed the Party scroll pane.
+- Wrote the remaining GUI work at my request, after I finished the object-oriented parts of the project: the Use Item, Save Game, and Next Battle buttons in `InventoryPanel`, `saveGame()` and `continueGame()` in `GameController`, the Binary or Text choice when loading (`loadGame()` picks the matching `SaveManager`), `EndPanel` for the Victory and Game Over screens, `BattleCanvas` (the `paintComponent` drawing with the floor, sprites, health bars, faded knocked-out characters, and the frame on the current hero), `SpriteLoader` with its `HashMap` cache, the sprites on the main menu and the character cards, and the mirroring that makes enemies face the heroes.
+- Found the two CC0 sprite packs (Kenney's Tiny Dungeon and Clint Bellanger's Tiny Creatures) at my request, picked a tile for each hero, enemy, and the floor, and copied them into `assets/sprites/`.
 
 I wrote all other code myself.
 
 ## External assets and attribution
 
-No assets yet. Each external asset will be listed here with its source URL, author, and license.
+All sprites come from two free pixel-art packs. Both are licensed CC0 (public domain), so they are free to use. Crediting is not required, but they are credited here.
+
+| Pack | Author | Source | License |
+|---|---|---|---|
+| Tiny Dungeon (1.0) | Kenney (kenney.nl) | https://opengameart.org/content/tiny-dungeon | CC0 1.0 |
+| Tiny Creatures (1.0) | Clint Bellanger (clintbellanger.net) | https://opengameart.org/content/tiny-creatures | CC0 1.0 |
+
+Each file in `assets/sprites/` is one 16x16 tile from a pack, renamed for the game:
+
+| File | Pack | Tile |
+|---|---|---|
+| `warrior.png` | Tiny Dungeon | `Tiles/tile_0097.png` |
+| `mage.png` | Tiny Dungeon | `Tiles/tile_0084.png` |
+| `archer.png` | Tiny Dungeon | `Tiles/tile_0112.png` |
+| `cleric.png` | Tiny Dungeon | `Tiles/tile_0099.png` |
+| `floor.png` | Tiny Dungeon | `Tiles/tile_0000.png` |
+| `goblin.png` | Tiny Creatures | `Tiles/tile_0011.png` |
+| `skeleton.png` | Tiny Creatures | `Tiles/tile_0002.png` |
+| `dragon_boss.png` | Tiny Creatures | `Tiles/tile_0034.png` |
+
+The three Tiny Creatures sprites were cut from the pack's `Tilemap/tilemap_packed.png` instead of the single tile files, because the single files have a black background and the sheet has a transparent one. The pixels are the same. The game mirrors the enemy sprites in code so they face the heroes. The files are not changed.
 
 ## Known issues
 

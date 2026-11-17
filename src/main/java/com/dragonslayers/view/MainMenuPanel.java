@@ -1,5 +1,6 @@
 package com.dragonslayers.view;
 
+import com.dragonslayers.assets.SpriteLoader;
 import com.dragonslayers.controller.GameController;
 import com.dragonslayers.io.SaveManager;
 
@@ -13,7 +14,11 @@ public class MainMenuPanel extends JPanel {
 
     private static final float TITLE_FONT_SIZE = 48f;
 
-    private static final int TITLE_PADDING = 60;
+    private static final int TITLE_PADDING = 40;
+
+    private static final String TITLE_SPRITE = "Dragon Boss";
+
+    private static final int TITLE_SPRITE_SCALE = 10;
 
     private static final int BUTTON_ROWS = 3;
 
@@ -34,6 +39,9 @@ public class MainMenuPanel extends JPanel {
         JLabel title = new JLabel(GameFrame.GAME_TITLE, SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, TITLE_FONT_SIZE));
         title.setBorder(BorderFactory.createEmptyBorder(TITLE_PADDING, 0, TITLE_PADDING, 0));
+        title.setIcon(SpriteLoader.getIcon(TITLE_SPRITE, TITLE_SPRITE_SCALE));
+        title.setHorizontalTextPosition(SwingConstants.CENTER); // text centered under the picture
+        title.setVerticalTextPosition(SwingConstants.BOTTOM);
         add(title, BorderLayout.NORTH);
 
         JButton newGameButton = new JButton("New Game");
@@ -55,7 +63,7 @@ public class MainMenuPanel extends JPanel {
     }
 
     /**
-     * Asks the player for a save slot, then loads it.
+     * Asks the player for a save slot and a save format, then loads it.
      * Does nothing if the player cancels.
      *
      * @param gameController the controller that loads the game
@@ -68,8 +76,15 @@ public class MainMenuPanel extends JPanel {
 
         Integer slot = (Integer) JOptionPane.showInputDialog(this, "Choose a save slot:", "Load Game",
                 JOptionPane.QUESTION_MESSAGE, null, slots, slots[0]);
-        if (slot != null) {
-            gameController.loadGame(slot);
+        if (slot == null) {
+            return; // the player pressed Cancel
+        }
+
+        String[] formats = {GameController.BINARY_FORMAT, GameController.TEXT_FORMAT};
+        String format = (String) JOptionPane.showInputDialog(this, "Choose a save format:", "Load Game",
+                JOptionPane.QUESTION_MESSAGE, null, formats, formats[0]);
+        if (format != null) {
+            gameController.loadGame(slot, format);
         }
     }
 }

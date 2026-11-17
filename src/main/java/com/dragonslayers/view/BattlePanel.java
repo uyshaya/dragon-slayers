@@ -1,6 +1,7 @@
 package com.dragonslayers.view;
 
 import com.dragonslayers.controller.BattleEngine;
+import com.dragonslayers.controller.EncounterFactory;
 import com.dragonslayers.controller.GameController;
 import com.dragonslayers.exceptions.InvalidActionException;
 import com.dragonslayers.model.*;
@@ -13,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The battle screen. Shows the party, the enemies, the combat log, and the action buttons.
@@ -35,11 +35,17 @@ public class BattlePanel extends JPanel {
 
     private static final float TURN_FONT_SIZE = 20f;
 
+    private static final int BUTTON_GROUP_GAP = 40;
+
     private final GameController controller;
+
+    private final JLabel encounterLabel = new JLabel("", SwingConstants.LEFT);
 
     private final JLabel turnLabel = new JLabel("", SwingConstants.CENTER);
 
-    private final JTextArea statusArea = new JTextArea();
+    private final JPanel headerBalance = new JPanel();
+
+    private final BattleCanvas canvas = new BattleCanvas();
 
     private final JTextArea logArea = new JTextArea();
 
@@ -48,6 +54,7 @@ public class BattlePanel extends JPanel {
     private BattleEngine engine;
 
     private Inventory inventory;
+
 
     /**
      * Creates the battle screen. The battle itself is given later by {@link #startBattle}.
@@ -59,11 +66,15 @@ public class BattlePanel extends JPanel {
         setLayout(new BorderLayout(PADDING, PADDING));
         setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
 
+        encounterLabel.setFont(encounterLabel.getFont().deriveFont(Font.BOLD, TURN_FONT_SIZE));
         turnLabel.setFont(turnLabel.getFont().deriveFont(Font.BOLD, TURN_FONT_SIZE));
-        add(turnLabel, BorderLayout.NORTH);
+        JPanel header = new JPanel(new BorderLayout());
+        header.add(encounterLabel, BorderLayout.WEST);
+        header.add(turnLabel, BorderLayout.CENTER);
+        header.add(headerBalance, BorderLayout.EAST); // empty, same width as the encounter label
+        add(header, BorderLayout.NORTH);
 
-        statusArea.setEditable(false);
-        add(statusArea, BorderLayout.CENTER);
+        add(canvas, BorderLayout.CENTER);
 
         logArea.setEditable(false);
         logArea.setLineWrap(true);
@@ -80,6 +91,11 @@ public class BattlePanel extends JPanel {
             button.addActionListener(listener);
             buttons.add(button);
         }
+
+        JButton menuButton = new JButton("Main Menu"); // not a battle action, so it has its own listener
+        menuButton.addActionListener(e -> confirmMainMenu());
+        buttons.add(Box.createHorizontalStrut(BUTTON_GROUP_GAP)); // empty space before the leave button
+        buttons.add(menuButton);
         add(buttons, BorderLayout.SOUTH);
     }
 
@@ -89,11 +105,15 @@ public class BattlePanel extends JPanel {
      * @param battle    the battle to show
      * @param engine    the engine that runs the battle
      * @param inventory the party's shared inventory, for the Item button
+     * @param encounter the encounter number, shown at the top
      */
-    public void startBattle(Battle battle, BattleEngine engine, Inventory inventory) {
+    public void startBattle(Battle battle, BattleEngine engine, Inventory inventory, int encounter) {
         this.battle = battle;
         this.engine = engine;
         this.inventory = inventory;
+        encounterLabel.setText("Encounter " + encounter + " of " + EncounterFactory.LAST_ENCOUNTER);
+        // an empty panel on the right as wide as the encounter label keeps the turn label centered on the screen
+        headerBalance.setPreferredSize(encounterLabel.getPreferredSize());
         refresh();
     }
 
@@ -138,6 +158,19 @@ public class BattlePanel extends JPanel {
                         "Cannot do that", JOptionPane.WARNING_MESSAGE);
             }
             refresh();
+        }
+    }
+
+    /**
+     * Asks the player to confirm, then leaves the battle and goes back to the main menu.
+     * The battle and any progress since the last save are lost, so the player is warned first.
+     */
+    private void confirmMainMenu() {
+        int answer = JOptionPane.showConfirmDialog(this,
+                "Leave the battle and go to the main menu? Progress since your last save will be lost.",
+                "Main Menu", JOptionPane.YES_NO_OPTION);
+        if (answer == JOptionPane.YES_OPTION) {
+            controller.showMainMenu();
         }
     }
 
@@ -191,7 +224,7 @@ public class BattlePanel extends JPanel {
     }
 
     /**
-     * Updates the log, the turn label, and the status. Tells the controller if the battle is over.
+     * Updates the log, the turn label, and the battle drawing. Tells the controller if the battle is over.
      */
     private void refresh() {
         logArea.setText(String.join("\n", battle.getLog()));
@@ -204,21 +237,6 @@ public class BattlePanel extends JPanel {
 
         Hero hero = engine.getCurrentHero();
         turnLabel.setText("Round " + battle.getRound() + " - " + hero.getName() + "'s turn (" + hero.getClassName() + ")");
-        statusArea.setText("HEROES\n" + describe(battle.getHeroes().getMembers())
-                + "\n\nENEMIES\n" + describe(battle.getEnemies().getMembers()));
-    }
-
-    /**
-     * Returns one line per character with its name, class, HP, and state.
-     *
-     * @param characters the characters to describe
-     * @return the lines, joined with new lines
-     */
-    private String describe(List<? extends GameCharacter> characters) {
-        return characters.stream()
-                .map(c -> c.getName() + "  " + c.getClassName() + "  " + c.getHp() + "/" + c.getMaxHp() + " HP"
-                        + (c.isKnockedOut() ? "  KO" : "")
-                        + (c.isDefending() ? "  [defending]" : ""))
-                .collect(Collectors.joining("\n"));
+        canvas.showBattle(battle, hero);
     }
 }

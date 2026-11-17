@@ -1,16 +1,22 @@
 package com.dragonslayers.view;
 
+import com.dragonslayers.controller.EncounterFactory;
 import com.dragonslayers.controller.GameController;
+import com.dragonslayers.exceptions.InvalidActionException;
+import com.dragonslayers.io.SaveManager;
 import com.dragonslayers.model.GameState;
 import com.dragonslayers.model.Hero;
 import com.dragonslayers.model.Inventory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The inventory screen.
+ * The inventory and status screen, shown between battles.
+ * <p>Shows each hero's stats and equipment and the shared inventory.
+ * The player can use or equip items, save the game, or go on to the next battle.</p>
  */
 public class InventoryPanel extends JPanel {
 
@@ -23,6 +29,10 @@ public class InventoryPanel extends JPanel {
     private static final String NOTHING_EQUIPPED = "none";
 
     private static final String EMPTY_INVENTORY = "(empty)";
+
+    private static final int NORMAL_EXIT = 0;
+
+    private static final int BUTTON_GROUP_GAP = 40;
 
     private final JLabel titleLabel = new JLabel("", SwingConstants.CENTER);
 
@@ -58,6 +68,26 @@ public class InventoryPanel extends JPanel {
         inventoryScroll.setBorder(BorderFactory.createTitledBorder("Inventory"));
         inventoryScroll.setPreferredSize(new Dimension(INVENTORY_WIDTH, 0));
         add(inventoryScroll, BorderLayout.EAST);
+
+        JButton useButton = new JButton("Use Item");
+        JButton saveButton = new JButton("Save Game");
+        JButton saveQuitButton = new JButton("Save and Quit");
+        JButton menuButton = new JButton("Main Menu");
+        JButton nextButton = new JButton("Next Battle");
+        useButton.addActionListener(e -> useItem());
+        saveButton.addActionListener(e -> chooseSlotAndSave());
+        saveQuitButton.addActionListener(e -> saveAndQuit());
+        menuButton.addActionListener(e -> confirmMainMenu());
+        nextButton.addActionListener(e -> controller.continueGame());
+
+        JPanel buttons = new JPanel();
+        buttons.add(useButton); // buttons for this screen, in the order the player uses them
+        buttons.add(saveButton);
+        buttons.add(nextButton);
+        buttons.add(Box.createHorizontalStrut(BUTTON_GROUP_GAP)); // empty space between the two groups
+        buttons.add(saveQuitButton); // buttons that leave the game
+        buttons.add(menuButton);
+        add(buttons, BorderLayout.SOUTH);
     }
 
     /**
@@ -71,10 +101,97 @@ public class InventoryPanel extends JPanel {
     }
 
     /**
+     * Asks the player for an item and a hero, then uses the item on that hero.
+     * <p>A potion heals the hero. A weapon or armor is equipped by the hero.
+     * Does nothing if the player cancels.</p>
+     */
+    private void useItem() {
+        Inventory inventory = gameState.getInventory();
+        List<String> itemNames = inventory.getUsableItemNames();
+        if (itemNames.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No usable items");
+            return;
+        }
+
+        String itemName = (String) JOptionPane.showInputDialog(this, "Use which item?", "Choose item",
+                JOptionPane.QUESTION_MESSAGE, null, itemNames.toArray(), itemNames.get(0));
+        if (itemName == null) {
+            return; // the player pressed Cancel
+        }
+
+        List<Hero> heroes = gameState.getHeroes().getAliveMembers(); // a knocked-out hero cannot be healed
+        String[] heroNames = heroes.stream()
+                .map(Hero::getName)
+                .toArray(String[]::new);
+        String heroName = (String) JOptionPane.showInputDialog(this, "Use " + itemName + " on whom?", "Choose hero",
+                JOptionPane.QUESTION_MESSAGE, null, heroNames, heroNames[0]);
+        if (heroName == null) {
+            return;
+        }
+        Hero target = heroes.get(List.of(heroNames).indexOf(heroName));
+
+        try {
+            inventory.useItem(itemName, target);
+        } catch (InvalidActionException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Cannot do that", JOptionPane.WARNING_MESSAGE);
+        }
+        refresh();
+    }
+
+    /**
+     * Asks the player for a save slot, then saves the game there.
+     * Does nothing if the player cancels.
+     */
+    private void chooseSlotAndSave() {
+        Integer slot = chooseSlot();
+        if (slot != null) {
+            controller.saveGame(slot);
+        }
+    }
+
+    /**
+     * Asks the player for a save slot, saves the game there, then closes the game.
+     * The game stays open if the player cancels or the save fails, so no progress is lost.
+     */
+    private void saveAndQuit() {
+        Integer slot = chooseSlot();
+        if (slot != null && controller.saveGame(slot)) {
+            System.exit(NORMAL_EXIT);
+        }
+    }
+
+    /**
+     * Asks the player to confirm, then goes back to the main menu.
+     * Progress since the last save is lost, so the player is warned first.
+     */
+    private void confirmMainMenu() {
+        int answer = JOptionPane.showConfirmDialog(this,
+                "Go to the main menu? Progress since your last save will be lost.",
+                "Main Menu", JOptionPane.YES_NO_OPTION);
+        if (answer == JOptionPane.YES_OPTION) {
+            controller.showMainMenu();
+        }
+    }
+
+    /**
+     * Asks the player to pick a save slot.
+     *
+     * @return the chosen slot number, or null if the player cancels
+     */
+    private Integer chooseSlot() {
+        Integer[] slots = new Integer[SaveManager.SLOT_COUNT];
+        for (int i = 0; i < slots.length; i++) {
+            slots[i] = SaveManager.FIRST_SLOT + i;
+        }
+        return (Integer) JOptionPane.showInputDialog(this, "Choose a save slot:", "Save Game",
+                JOptionPane.QUESTION_MESSAGE, null, slots, slots[0]);
+    }
+
+    /**
      * Updates the title, the hero stats, and the inventory list from the game state.
      */
     private void refresh() {
-        titleLabel.setText("Before encounter " + gameState.getEncounter());
+        titleLabel.setText("Before encounter " + gameState.getEncounter() + " of " + EncounterFactory.LAST_ENCOUNTER);
 
         StringBuilder heroText = new StringBuilder();
         for (Hero hero : gameState.getHeroes().getMembers()) {
