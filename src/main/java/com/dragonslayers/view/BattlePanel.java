@@ -19,7 +19,7 @@ import java.util.List;
  * The battle screen. Shows the party, the enemies, the combat log, and the action buttons.
  * <p>The player acts with one hero at a time, in speed order. The enemies act after the last hero.</p>
  */
-public class BattlePanel extends JPanel {
+public class BattlePanel extends BackgroundPanel {
 
     private static final String ATTACK = "Attack";
 
@@ -28,6 +28,8 @@ public class BattlePanel extends JPanel {
     private static final String ABILITY = "Ability";
 
     private static final String ITEM = "Item";
+
+    private static final String ATTACK_SPRITE = "attack";
 
     private static final int PADDING = 10;
 
@@ -68,7 +70,11 @@ public class BattlePanel extends JPanel {
 
         encounterLabel.setFont(encounterLabel.getFont().deriveFont(Font.BOLD, TURN_FONT_SIZE));
         turnLabel.setFont(turnLabel.getFont().deriveFont(Font.BOLD, TURN_FONT_SIZE));
+        encounterLabel.setForeground(TEXT_COLOR);
+        turnLabel.setForeground(TEXT_COLOR);
         JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        headerBalance.setOpaque(false);
         header.add(encounterLabel, BorderLayout.WEST);
         header.add(turnLabel, BorderLayout.CENTER);
         header.add(headerBalance, BorderLayout.EAST); // empty, same width as the encounter label
@@ -79,13 +85,13 @@ public class BattlePanel extends JPanel {
         logArea.setEditable(false);
         logArea.setLineWrap(true);
         logArea.setWrapStyleWord(true);
-        JScrollPane logScroll = new JScrollPane(logArea);
-        logScroll.setBorder(BorderFactory.createTitledBorder("Combat log"));
+        JScrollPane logScroll = createTitledScrollPane(logArea, "Combat log");
         logScroll.setPreferredSize(new Dimension(LOG_WIDTH, 0));
         add(logScroll, BorderLayout.EAST);
 
         ActionButtonListener listener = new ActionButtonListener();
         JPanel buttons = new JPanel();
+        buttons.setOpaque(false);
         for (String action : List.of(ATTACK, ABILITY, DEFEND, ITEM)) {
             JButton button = new JButton(action);
             button.addActionListener(listener);
@@ -130,12 +136,14 @@ public class BattlePanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             Hero hero = engine.getCurrentHero();
+            int roundBefore = battle.getRound();
             try {
                 switch (e.getActionCommand()) {
                     case ATTACK -> {
                         Enemy target = chooseTarget("Attack whom?", battle.getEnemies().getAliveMembers());
                         if (target != null) {
                             engine.heroAttack(hero, target);
+                            canvas.playProjectile(hero, target, ATTACK_SPRITE); // only for show, same for every hero and enemy
                         }
                     }
                     case ABILITY -> {
@@ -147,17 +155,37 @@ public class BattlePanel extends JPanel {
                         }
                         if (target != null) {
                             engine.heroAbility(hero, target);
+                            // only for show: the effect sprite is named after the ability, for example fireball.png
+                            canvas.playProjectile(hero, target, hero.getAbilityName());
                         }
                     }
                     case DEFEND -> engine.heroDefend(hero);
                     case ITEM -> useItem(hero);
                     default -> throw new InvalidActionException("Unknown action: " + e.getActionCommand());
                 }
+                if (battle.getRound() > roundBefore) {
+                    playEnemyTurns(); // the round went up, so the enemies acted after this hero
+                }
             } catch (InvalidActionException ex) {
                 JOptionPane.showMessageDialog(BattlePanel.this, ex.getMessage(),
                         "Cannot do that", JOptionPane.WARNING_MESSAGE);
             }
             refresh();
+        }
+    }
+
+    /**
+     * Plays an animation for each enemy that acted in the last enemy phase, one after another.
+     * <p>A normal attack shows the attack sprite. An ability shows the sprite named after it,
+     * for example {@code flame_breath.png}. Bone Guard has the Skeleton as its target, so it shows on the Skeleton.</p>
+     */
+    private void playEnemyTurns() {
+        for (Enemy enemy : engine.getEnemiesThatActed()) {
+            String spriteName = ATTACK_SPRITE;
+            if (enemy.usedAbilityLastTurn()) {
+                spriteName = enemy.getAbilityName();
+            }
+            canvas.playProjectile(enemy, enemy.getLastTarget(), spriteName);
         }
     }
 

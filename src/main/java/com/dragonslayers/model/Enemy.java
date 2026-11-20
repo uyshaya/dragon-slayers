@@ -12,6 +12,10 @@ public abstract class Enemy extends GameCharacter {
 
     private static final Random RANDOM = new Random();
 
+    private GameCharacter lastTarget; // who this enemy's last turn affected, for the battle screen
+
+    private boolean usedAbilityLastTurn;
+
     /**
      * Creates an enemy with the given stats.
      *
@@ -35,6 +39,35 @@ public abstract class Enemy extends GameCharacter {
     }
 
     /**
+     * Says whether this enemy's ability affects the enemy itself instead of a hero.
+     * Enemies that protect themselves override this to return true.
+     *
+     * @return false by default
+     */
+    protected boolean abilityTargetsSelf() {
+        return false;
+    }
+
+    /**
+     * Returns the character affected by this enemy's last turn: the hero it hit,
+     * or the enemy itself if its ability targets itself.
+     *
+     * @return the last target, or null before the enemy's first turn
+     */
+    public GameCharacter getLastTarget() {
+        return lastTarget;
+    }
+
+    /**
+     * Says whether this enemy used its ability on its last turn.
+     *
+     * @return true for the ability, false for a normal attack
+     */
+    public boolean usedAbilityLastTurn() {
+        return usedAbilityLastTurn;
+    }
+
+    /**
      * Takes this enemy's turn: picks a random alive hero, then attacks or uses its ability.
      *
      * @param heroes the hero party to attack
@@ -47,9 +80,13 @@ public abstract class Enemy extends GameCharacter {
         int damage;
         if (shouldUseAbility()) {
             damage = useAbility(targetHero);
+            usedAbilityLastTurn = true;
+            lastTarget = abilityTargetsSelf() ? this : targetHero;
             return getName() + " uses " + getAbilityName() + " on " + targetHero.getName() + " for " + damage;
         } else {
             damage = attack(targetHero);
+            usedAbilityLastTurn = false;
+            lastTarget = targetHero;
         }
 
         return getName() + " attacks " + targetHero.getName() + " for " + damage;

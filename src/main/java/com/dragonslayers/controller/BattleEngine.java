@@ -2,6 +2,8 @@ package com.dragonslayers.controller;
 
 import com.dragonslayers.model.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,6 +14,8 @@ public class BattleEngine {
     private final Battle battle;
 
     private final Inventory inventory;
+
+    private final List<Enemy> enemiesThatActed = new ArrayList<>();
 
     private List<Hero> heroOrder;
 
@@ -86,14 +90,27 @@ public class BattleEngine {
      * <p>Stops early if the battle ends.</p>
      */
     private void runEnemyTurns() {
+        enemiesThatActed.clear(); // only keep the enemies from this enemy phase
         for (Enemy enemy : battle.getEnemyTurnOrder()) {
             if (battle.isOver()) {
                 return;
             }
             enemy.stopDefending();
             battle.addLog(enemy.takeTurn(battle.getHeroes()));
+            enemiesThatActed.add(enemy);
         }
         battle.nextRound();
+    }
+
+    /**
+     * Returns the enemies that acted in the last enemy phase, in the order they acted.
+     * The battle screen uses this to play their animations.
+     * <p>The list is read-only.</p>
+     *
+     * @return the enemies from the last enemy phase
+     */
+    public List<Enemy> getEnemiesThatActed() {
+        return Collections.unmodifiableList(enemiesThatActed);
     }
 
     /**

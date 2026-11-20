@@ -93,9 +93,9 @@ Each row is a requirement from Chapter III of the spec.
 |---|---|---|
 | ✓ | Swing only | `view` package (`JFrame`, `JPanel`, `JButton`, `JOptionPane`) |
 | ✓ | Three or more screens | `MainMenuPanel`, `CharacterSelectPanel`, `BattlePanel`, `InventoryPanel`, `EndPanel`, switched with `CardLayout` |
-| ✓ | Two or more layout managers | `CardLayout` in `GameFrame`; `BorderLayout`, `GridLayout`, `FlowLayout` in `MainMenuPanel` |
+| ✓ | Two or more layout managers | `CardLayout` in `GameFrame`; `GridBagLayout`, `BorderLayout`, `GridLayout`, `FlowLayout` in `MainMenuPanel` |
 | ✓ | Inner class, anonymous class, and lambda event handlers | inner `ActionButtonListener` in `BattlePanel`, anonymous class in `CharacterSelectPanel`, lambdas in `MainMenuPanel` |
-| ✓ | Custom `paintComponent` with `Graphics2D` | `BattleCanvas` draws the floor tiles, sprites, and health bars |
+| ✓ | Custom `paintComponent` with `Graphics2D` | `BattleCanvas` draws the arena, sprites, and health bars; `BackgroundPanel` draws the background picture behind every screen |
 | ✓ | Nearest-neighbour sprite scaling | `VALUE_INTERPOLATION_NEAREST_NEIGHBOR` in `BattleCanvas`, `Image.SCALE_REPLICATE` in `SpriteLoader.getIcon()` |
 
 ### §6 Code quality
@@ -107,6 +107,12 @@ Each row is a requirement from Chapter III of the spec.
 | | No class over about 300 lines | |
 | ✓ | No magic numbers | `GameBalance` |
 | ✓ | Logical packages | `model`, `view`, `controller`, `io`, `exceptions`, `assets` |
+
+### Bonus
+
+| Done | Bonus | Where |
+|---|---|---|
+| ✓ | Animation with `javax.swing.Timer` (+3) | `BattleCanvas.playProjectile()`: when a hero or enemy attacks or uses an ability, an effect sprite flies to the target, one after another |
 
 ## Who did what
 
@@ -163,8 +169,10 @@ I used Claude for the following:
 - Finished `BattlePanel` at my request (the layout, the ability and item actions, the status and log display, and the Javadoc), and added `battleEnded()` and the starting potions to `GameController`.
 - Suggested the steps for `InventoryPanel` and its `GameController` hooks, and reviewed my code for each step.
 - Finished `refresh()` and `describe()` in `InventoryPanel` at my request (the hero text, the null checks for equipment, and the inventory stream), and fixed the Party scroll pane.
-- Wrote the remaining GUI work at my request, after I finished the object-oriented parts of the project: the Use Item, Save Game, and Next Battle buttons in `InventoryPanel`, `saveGame()` and `continueGame()` in `GameController`, the Binary or Text choice when loading (`loadGame()` picks the matching `SaveManager`), `EndPanel` for the Victory and Game Over screens, `BattleCanvas` (the `paintComponent` drawing with the floor, sprites, health bars, faded knocked-out characters, and the frame on the current hero), `SpriteLoader` with its `HashMap` cache, the sprites on the main menu and the character cards, and the mirroring that makes enemies face the heroes.
-- Found the two CC0 sprite packs (Kenney's Tiny Dungeon and Clint Bellanger's Tiny Creatures) at my request, picked a tile for each hero, enemy, and the floor, and copied them into `assets/sprites/`.
+- Wrote the remaining GUI work at my request, after I finished the object-oriented parts of the project: the Use Item, Save Game, and Next Battle buttons in `InventoryPanel`, `saveGame()` and `continueGame()` in `GameController`, the Binary or Text choice when loading (`loadGame()` picks the matching `SaveManager`), `EndPanel` for the Victory and Game Over screens, `BattleCanvas` (the `paintComponent` drawing with the sprites, health bars, faded knocked-out characters, and the frame on the current hero), `SpriteLoader` with its `HashMap` cache, the sprites on the main menu and the character cards, and the mirroring that makes enemies face the heroes.
+- Found the two CC0 sprite packs (Kenney's Tiny Dungeon and Clint Bellanger's Tiny Creatures) at my request, picked a tile for each hero and enemy, and copied them into `assets/sprites/`.
+- Wrote the attack and ability animations for the heroes and enemies at my request, including the turn tracking they need in `Enemy` (`getLastTarget()`, `usedAbilityLastTurn()`, `abilityTargetsSelf()`) and `BattleEngine` (`getEnemiesThatActed()`).
+- Wrote the screen and battle backgrounds at my request (`BackgroundPanel`, an abstract panel that every screen extends, and the battle arena drawn by `BattleCanvas`), using Kenney's Tiny Dungeon sample scene and tiles.
 
 I wrote all other code myself.
 
@@ -185,12 +193,21 @@ Each file in `assets/sprites/` is one 16x16 tile from a pack, renamed for the ga
 | `mage.png` | Tiny Dungeon | `Tiles/tile_0084.png` |
 | `archer.png` | Tiny Dungeon | `Tiles/tile_0112.png` |
 | `cleric.png` | Tiny Dungeon | `Tiles/tile_0099.png` |
-| `floor.png` | Tiny Dungeon | `Tiles/tile_0000.png` |
 | `goblin.png` | Tiny Creatures | `Tiles/tile_0011.png` |
 | `skeleton.png` | Tiny Creatures | `Tiles/tile_0002.png` |
 | `dragon_boss.png` | Tiny Creatures | `Tiles/tile_0034.png` |
+| `fireball.png` | Tiny Creatures | `Tiles/tile_0056.png` |
+| `heal.png` | Tiny Creatures | `Tiles/tile_0090.png` |
+| `power_strike.png` | Tiny Dungeon | `Tiles/tile_0104.png`, rotated to point right |
+| `double_shot.png` | Tiny Dungeon | `Tiles/tile_0131.png`, rotated to point right |
+| `attack.png` | Tiny Dungeon | `Tiles/tile_0103.png`, rotated to point right |
+| `bone_guard.png` | Tiny Dungeon | `Tiles/tile_0102.png` |
+| `dirty_trick.png` | Tiny Creatures | `Tiles/tile_0058.png` |
+| `flame_breath.png` | Tiny Creatures | `Tiles/tile_0004.png` |
+| `background.png` | Tiny Dungeon | `Sample.png`, a 480x306 area cropped from x 380, y 0 |
+| `battle_background.png` | Tiny Dungeon | 9x8 tiles laid out as an arena: `tile_0040` (wall), `tile_0050` (wall shadow), `tile_0048`, `tile_0049`, `tile_0051` (sand floor) |
 
-The three Tiny Creatures sprites were cut from the pack's `Tilemap/tilemap_packed.png` instead of the single tile files, because the single files have a black background and the sheet has a transparent one. The pixels are the same. The game mirrors the enemy sprites in code so they face the heroes. The files are not changed.
+The Tiny Creatures sprites were cut from the pack's `Tilemap/tilemap_packed.png` instead of the single tile files, because the single files have a black background and the sheet has a transparent one. The pixels are the same. The dagger, sword, and arrow were rotated 90 degrees so they point toward the enemies. The game mirrors the enemy sprites in code so they face the heroes. Those files are not changed. The screen background is a cropped part of Kenney's sample scene, without the license banner at the bottom.
 
 ## Known issues
 

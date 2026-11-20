@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * The screen where the player picks and names three heroes.
  * <p>Each class card shows the class stats and signature ability.</p>
  */
-public class CharacterSelectPanel extends JPanel {
+public class CharacterSelectPanel extends BackgroundPanel {
 
     private static final int PARTY_SIZE = 3;
 
@@ -47,9 +47,11 @@ public class CharacterSelectPanel extends JPanel {
 
         JLabel title = new JLabel("Choose " + PARTY_SIZE + " heroes", SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, TITLE_FONT_SIZE));
+        title.setForeground(TEXT_COLOR);
         add(title, BorderLayout.NORTH);
 
         JPanel cards = new JPanel(new GridLayout(1, HeroFactory.HERO_CLASSES.size(), CARD_GAP, CARD_GAP));
+        cards.setOpaque(false); // the cards themselves stay solid, only the gaps show the background
         for (String className : HeroFactory.HERO_CLASSES) {
             cards.add(createCard(className));
         }
@@ -62,6 +64,8 @@ public class CharacterSelectPanel extends JPanel {
         startButton.addActionListener(e -> controller.startGame(createParty()));
 
         JPanel bottom = new JPanel();
+        bottom.setOpaque(false);
+        partyLabel.setForeground(TEXT_COLOR);
         bottom.add(partyLabel);
         bottom.add(clearButton);
         bottom.add(backButton);

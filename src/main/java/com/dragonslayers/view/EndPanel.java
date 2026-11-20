@@ -9,7 +9,7 @@ import java.awt.*;
  * The last screen. Shows Victory when the boss is defeated, or Game Over when the whole party is knocked out.
  * <p>The Main Menu button goes back to the start.</p>
  */
-public class EndPanel extends JPanel {
+public class EndPanel extends BackgroundPanel {
 
     private static final float TITLE_FONT_SIZE = 48f;
 
@@ -32,12 +32,15 @@ public class EndPanel extends JPanel {
 
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, TITLE_FONT_SIZE));
         messageLabel.setFont(messageLabel.getFont().deriveFont(MESSAGE_FONT_SIZE));
+        titleLabel.setForeground(TEXT_COLOR);
+        messageLabel.setForeground(TEXT_COLOR);
         add(titleLabel, BorderLayout.NORTH);
         add(messageLabel, BorderLayout.CENTER);
 
         JButton menuButton = new JButton("Main Menu");
         menuButton.addActionListener(e -> controller.showMainMenu());
         JPanel buttons = new JPanel();
+        buttons.setOpaque(false);
         buttons.add(menuButton);
         add(buttons, BorderLayout.SOUTH);
     }

@@ -8,13 +8,19 @@ import com.dragonslayers.model.Hero;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 
 /**
- * Draws the battle scene with Graphics2D: a tiled floor, the heroes on the left, and the enemies on the right.
+ * Draws the battle scene with Graphics2D: a dungeon arena background, the heroes on the left,
+ * and the enemies on the right.
  * <p>Each character has its sprite, its name, a health bar, and its HP. A knocked-out character is drawn faded,
  * and the hero whose turn it is has a gold frame. Enemies are mirrored so they face the heroes.
  * Sprites are scaled with nearest-neighbour interpolation so the pixels stay sharp.</p>
+ * <p>It can also play short projectile animations, such as a fireball flying from a hero to an enemy
+ * or a healing orb flying to an ally. Several can be added at once; they play one after another.
+ * A {@link Timer} moves the projectile a little on every tick and repaints the canvas.</p>
  */
 public class BattleCanvas extends JPanel {
 
@@ -38,8 +44,6 @@ public class BattleCanvas extends JPanel {
 
     private static final float KNOCKED_OUT_ALPHA = 0.35f;
 
-    private static final String FLOOR_SPRITE = "floor";
-
     private static final Color TEXT_COLOR = Color.WHITE;
 
     private static final Color BAR_BACKGROUND = new Color(90, 20, 20);
@@ -48,9 +52,47 @@ public class BattleCanvas extends JPanel {
 
     private static final Color FRAME_COLOR = new Color(255, 215, 0);
 
+    private static final String ARENA_SPRITE = "battle_background";
+
+    private static final Color PLATE_COLOR = new Color(20, 15, 25, 200); // dark and mostly solid
+
+    private static final int PLATE_PADDING = 8;
+
+    private static final int PLATE_TEXT_WIDTH = 140;
+
+    private static final int PLATE_CORNER = 16;
+
+    private static final int FRAME_DELAY_MS = 20;
+
+    private static final int EFFECT_FRAMES = 40;
+
+    private static final int EFFECT_SCALE = 5;
+
+    private final Timer effectTimer = new Timer(FRAME_DELAY_MS, e -> nextEffectFrame());
+
     private Battle battle;
 
     private Hero currentHero;
+
+    private BufferedImage effectSprite; // null when no projectile is flying
+
+    private Point effectStart;
+
+    private Point effectEnd;
+
+    private int effectFrame;
+
+    private final Queue<Effect> waitingEffects = new ArrayDeque<>(); // first in, first out
+
+    /**
+     * One projectile animation: who shoots, who is hit, and which sprite flies.
+     *
+     * @param from       the character that shoots
+     * @param to         the character that is hit
+     * @param spriteName the projectile sprite name
+     */
+    private record Effect(GameCharacter from, GameCharacter to, String spriteName) {
+    }
 
     /**
      * Creates an empty canvas. The battle is given later by {@link #showBattle}.
@@ -65,13 +107,70 @@ public class BattleCanvas extends JPanel {
      * @param currentHero the hero whose turn it is, drawn with a frame
      */
     public void showBattle(Battle battle, Hero currentHero) {
+        if (battle != this.battle) {
+            stopEffect(); // a projectile from the last battle should not appear in the new one
+        }
         this.battle = battle;
         this.currentHero = currentHero;
         repaint(); // asks Swing to call paintComponent soon
     }
 
     /**
-     * Draws the floor and both sides of the battle.
+     * Adds a projectile animation from one character to another, for example a fireball.
+     * It starts right away, or waits until the animations before it have finished.
+     * <p>This is only for show. The damage is already done by the battle engine.</p>
+     *
+     * @param from       the character that shoots
+     * @param to         the character that is hit
+     * @param spriteName the projectile sprite, for example {@code "Fireball"} for {@code fireball.png}
+     */
+    public void playProjectile(GameCharacter from, GameCharacter to, String spriteName) {
+        waitingEffects.add(new Effect(from, to, spriteName));
+        if (!effectTimer.isRunning()) {
+            startNextEffect(); // nothing is playing, so start now
+        }
+    }
+
+    /**
+     * Takes the oldest waiting animation and starts it. Does nothing if none are waiting.
+     */
+    private void startNextEffect() {
+        Effect next = waitingEffects.poll(); // removes and returns the oldest one, or null if the queue is empty
+        if (next == null) {
+            return;
+        }
+        effectSprite = SpriteLoader.getSprite(next.spriteName());
+        effectStart = getSpriteCenter(next.from());
+        effectEnd = getSpriteCenter(next.to());
+        effectFrame = 0;
+        effectTimer.start();
+    }
+
+    /**
+     * Moves the projectile one step. Called by the timer on every tick.
+     * When it reaches the target, it is removed and the next waiting animation starts.
+     */
+    private void nextEffectFrame() {
+        effectFrame++;
+        if (effectFrame >= EFFECT_FRAMES) {
+            effectTimer.stop();
+            effectSprite = null;
+            startNextEffect();
+        }
+        repaint();
+    }
+
+    /**
+     * Stops the timer, removes the projectile, and drops any waiting animations.
+     */
+    private void stopEffect() {
+        effectTimer.stop();
+        effectSprite = null;
+        waitingEffects.clear();
+    }
+
+    /**
+     * Draws the arena, both sides of the battle, and any flying projectile.
      *
      * @param g the graphics context Swing gives the panel
      */
@@ -85,44 +184,81 @@ public class BattleCanvas extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
-        drawFloor(g2);
-        drawSide(g2, battle.getHeroes().getMembers(), MARGIN, false);
-        drawSide(g2, battle.getEnemies().getMembers(), getWidth() / 2 + MARGIN, true);
+        g2.drawImage(SpriteLoader.getSprite(ARENA_SPRITE), 0, 0, getWidth(), getHeight(), null); // stretched to fill the canvas
+        drawSide(g2, battle.getHeroes().getMembers(), false);
+        drawSide(g2, battle.getEnemies().getMembers(), true);
+        drawEffect(g2);
     }
 
     /**
-     * Fills the whole canvas with the floor tile, row by row.
-     *
-     * @param g2 the graphics to draw with
-     */
-    private void drawFloor(Graphics2D g2) {
-        BufferedImage tile = SpriteLoader.getSprite(FLOOR_SPRITE);
-        int size = tile.getWidth() * SPRITE_SCALE;
-        for (int y = 0; y < getHeight(); y += size) {
-            for (int x = 0; x < getWidth(); x += size) {
-                g2.drawImage(tile, x, y, size, size, null);
-            }
-        }
-    }
-
-    /**
-     * Draws one side of the battle as a column, one character per row.
+     * Draws one side of the battle, each character at its own position.
      *
      * @param g2         the graphics to draw with
      * @param characters the characters on this side
-     * @param x          the left edge of the column
      * @param faceLeft   true to mirror the sprites so they face left
      */
-    private void drawSide(Graphics2D g2, List<? extends GameCharacter> characters, int x, boolean faceLeft) {
-        int y = MARGIN;
+    private void drawSide(Graphics2D g2, List<? extends GameCharacter> characters, boolean faceLeft) {
         for (GameCharacter character : characters) {
-            drawCharacter(g2, character, x, y, faceLeft);
-            y += ROW_HEIGHT;
+            Point position = getSpritePosition(character);
+            drawCharacter(g2, character, position.x, position.y, faceLeft);
         }
     }
 
     /**
-     * Draws one character: the sprite, then the name, health bar, and HP to its right.
+     * Returns where a character's sprite is drawn. Heroes are in the left column and enemies in the right one,
+     * one row per character in party order.
+     *
+     * @param character the character to find
+     * @return the top-left corner of the character's sprite
+     */
+    private Point getSpritePosition(GameCharacter character) {
+        int row = battle.getHeroes().getMembers().indexOf(character);
+        int x = MARGIN;
+        if (row == -1) { // not a hero, so it is an enemy
+            row = battle.getEnemies().getMembers().indexOf(character);
+            x = getWidth() / 2 + MARGIN;
+        }
+        return new Point(x, MARGIN + row * ROW_HEIGHT);
+    }
+
+    /**
+     * Returns the middle of a character's sprite, where a projectile starts or lands.
+     *
+     * @param character the character to find
+     * @return the center point of the character's sprite
+     */
+    private Point getSpriteCenter(GameCharacter character) {
+        Point position = getSpritePosition(character);
+        BufferedImage sprite = SpriteLoader.getSprite(character.getClassName());
+        int halfSize = sprite.getWidth() * SPRITE_SCALE / 2;
+        return new Point(position.x + halfSize, position.y + halfSize);
+    }
+
+    /**
+     * Draws the flying projectile, if there is one. Its position moves in a straight line
+     * from the start to the end as the frame count goes up.
+     *
+     * @param g2 the graphics to draw with
+     */
+    private void drawEffect(Graphics2D g2) {
+        if (effectSprite == null) {
+            return;
+        }
+        double progress = (double) effectFrame / EFFECT_FRAMES; // 0.0 at the start, 1.0 at the target
+        int centerX = (int) (effectStart.x + (effectEnd.x - effectStart.x) * progress);
+        int centerY = (int) (effectStart.y + (effectEnd.y - effectStart.y) * progress);
+        int size = effectSprite.getWidth() * EFFECT_SCALE;
+        int left = centerX - size / 2;
+        int top = centerY - size / 2;
+        if (effectEnd.x < effectStart.x) {
+            g2.drawImage(effectSprite, left + size, top, -size, size, null); // flying left, so mirror it
+        } else {
+            g2.drawImage(effectSprite, left, top, size, size, null);
+        }
+    }
+
+    /**
+     * Draws one character on a dark plate: the sprite, then the name, health bar, and HP to its right.
      *
      * @param g2        the graphics to draw with
      * @param character the character to draw
@@ -134,6 +270,12 @@ public class BattleCanvas extends JPanel {
         BufferedImage sprite = SpriteLoader.getSprite(character.getClassName());
         int width = sprite.getWidth() * SPRITE_SCALE;
         int height = sprite.getHeight() * SPRITE_SCALE;
+
+        // a dark rounded plate behind the sprite and its text, so the character stands out from the background
+        g2.setColor(PLATE_COLOR);
+        g2.fillRoundRect(x - PLATE_PADDING, y - PLATE_PADDING,
+                width + TEXT_GAP + PLATE_TEXT_WIDTH + 2 * PLATE_PADDING, height + 2 * PLATE_PADDING,
+                PLATE_CORNER, PLATE_CORNER);
 
         Composite normal = g2.getComposite();
         if (character.isKnockedOut()) {

@@ -8,13 +8,14 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * The first screen. Shows the title and the New Game, Load Game, and Quit buttons.
+ * The first screen. Shows the title and the New Game, Load Game, and Quit buttons
+ * on top of a pixel-art dungeon background.
  */
-public class MainMenuPanel extends JPanel {
+public class MainMenuPanel extends BackgroundPanel {
 
     private static final float TITLE_FONT_SIZE = 48f;
 
-    private static final int TITLE_PADDING = 40;
+    private static final int TITLE_GAP = 30;
 
     private static final String TITLE_SPRITE = "Dragon Boss";
 
@@ -34,15 +35,15 @@ public class MainMenuPanel extends JPanel {
      * @param gameController the controller that handles each button
      */
     public MainMenuPanel(GameController gameController) {
-        setLayout(new BorderLayout());
+        setLayout(new GridBagLayout()); // keeps its one child, the content panel, in the middle of the screen
 
         JLabel title = new JLabel(GameFrame.GAME_TITLE, SwingConstants.CENTER);
         title.setFont(title.getFont().deriveFont(Font.BOLD, TITLE_FONT_SIZE));
-        title.setBorder(BorderFactory.createEmptyBorder(TITLE_PADDING, 0, TITLE_PADDING, 0));
+        title.setForeground(TEXT_COLOR);
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, TITLE_GAP, 0)); // space between title and buttons
         title.setIcon(SpriteLoader.getIcon(TITLE_SPRITE, TITLE_SPRITE_SCALE));
         title.setHorizontalTextPosition(SwingConstants.CENTER); // text centered under the picture
         title.setVerticalTextPosition(SwingConstants.BOTTOM);
-        add(title, BorderLayout.NORTH);
 
         JButton newGameButton = new JButton("New Game");
         JButton loadButton = new JButton("Load Game");
@@ -53,13 +54,20 @@ public class MainMenuPanel extends JPanel {
         quitButton.addActionListener(e -> System.exit(NORMAL_EXIT));
 
         JPanel buttons = new JPanel(new GridLayout(BUTTON_ROWS, BUTTON_COLUMNS, 0, BUTTON_GAP));
+        buttons.setOpaque(false); // see-through, so the background shows around the buttons
         buttons.add(newGameButton);
         buttons.add(loadButton);
         buttons.add(quitButton);
 
-        JPanel center = new JPanel();
+        JPanel center = new JPanel(); // FlowLayout keeps the buttons at their normal width
+        center.setOpaque(false);
         center.add(buttons);
-        add(center, BorderLayout.CENTER);
+
+        JPanel content = new JPanel(new BorderLayout()); // the title, with the buttons under it
+        content.setOpaque(false);
+        content.add(title, BorderLayout.NORTH);
+        content.add(center, BorderLayout.CENTER);
+        add(content);
     }
 
     /**

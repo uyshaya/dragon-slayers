@@ -46,4 +46,14 @@ public class Skeleton extends Enemy {
     public String getAbilityName() {
         return "Bone Guard";
     }
+
+    /**
+     * Bone Guard protects the Skeleton itself, not a hero.
+     *
+     * @return always true
+     */
+    @Override
+    protected boolean abilityTargetsSelf() {
+        return true;
+    }
 }

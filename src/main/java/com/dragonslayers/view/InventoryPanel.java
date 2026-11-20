@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * <p>Shows each hero's stats and equipment and the shared inventory.
  * The player can use or equip items, save the game, or go on to the next battle.</p>
  */
-public class InventoryPanel extends JPanel {
+public class InventoryPanel extends BackgroundPanel {
 
     private static final int PADDING = 10;
 
@@ -55,17 +55,16 @@ public class InventoryPanel extends JPanel {
 
         add(titleLabel, BorderLayout.NORTH);
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, TITLE_FONT_SIZE));
+        titleLabel.setForeground(TEXT_COLOR);
 
         heroArea.setEditable(false);
-        JScrollPane partyScroll = new JScrollPane(heroArea);
-        partyScroll.setBorder(BorderFactory.createTitledBorder("Party"));
+        JScrollPane partyScroll = createTitledScrollPane(heroArea, "Party");
         add(partyScroll, BorderLayout.CENTER);
 
         inventoryArea.setEditable(false);
         inventoryArea.setLineWrap(true);
         inventoryArea.setWrapStyleWord(true);
-        JScrollPane inventoryScroll = new JScrollPane(inventoryArea);
-        inventoryScroll.setBorder(BorderFactory.createTitledBorder("Inventory"));
+        JScrollPane inventoryScroll = createTitledScrollPane(inventoryArea, "Inventory");
         inventoryScroll.setPreferredSize(new Dimension(INVENTORY_WIDTH, 0));
         add(inventoryScroll, BorderLayout.EAST);
 
@@ -81,6 +80,7 @@ public class InventoryPanel extends JPanel {
         nextButton.addActionListener(e -> controller.continueGame());
 
         JPanel buttons = new JPanel();
+        buttons.setOpaque(false);
         buttons.add(useButton); // buttons for this screen, in the order the player uses them
         buttons.add(saveButton);
         buttons.add(nextButton);
