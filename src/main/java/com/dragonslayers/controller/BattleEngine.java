@@ -1,5 +1,6 @@
 package com.dragonslayers.controller;
 
+import com.dragonslayers.exceptions.InvalidActionException;
 import com.dragonslayers.model.*;
 
 import java.util.ArrayList;
@@ -47,14 +48,31 @@ public class BattleEngine {
     }
 
     /**
-     * Uses the hero's ability on the target.
+     * Checks that the hero can still use its ability in this encounter.
+     * The battle screen calls this before asking for a target, so the player is told right away.
+     *
+     * @param hero the hero who wants to use the ability
+     * @throws InvalidActionException if the hero has no ability uses left
+     */
+    public void checkAbilityUses(Hero hero) {
+        if (!hero.hasAbilityUses()) {
+            throw new InvalidActionException(hero.getName() + " has no " + hero.getAbilityName()
+                    + " left this battle. Attack, defend, or use an item instead.");
+        }
+    }
+
+    /**
+     * Uses the hero's ability on the target and spends one of the hero's ability uses.
      *
      * @param hero   the hero using the ability
      * @param target the enemy to hit, or the ally to heal
+     * @throws InvalidActionException if the hero has no ability uses left
      */
     public void heroAbility(Hero hero, GameCharacter target) {
+        checkAbilityUses(hero);
         hero.stopDefending();
         int amount = hero.useAbility(target);
+        hero.spendAbilityUse();
         battle.addLog(hero.getName() + " uses " + hero.getAbilityName() + " on " + target.getName() + " for " + amount);
         endHeroTurn();
     }

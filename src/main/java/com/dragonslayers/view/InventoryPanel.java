@@ -3,7 +3,6 @@ package com.dragonslayers.view;
 import com.dragonslayers.controller.EncounterFactory;
 import com.dragonslayers.controller.GameController;
 import com.dragonslayers.exceptions.InvalidActionException;
-import com.dragonslayers.io.SaveManager;
 import com.dragonslayers.model.GameState;
 import com.dragonslayers.model.Hero;
 import com.dragonslayers.model.Inventory;
@@ -143,7 +142,7 @@ public class InventoryPanel extends BackgroundPanel {
      * Does nothing if the player cancels.
      */
     private void chooseSlotAndSave() {
-        Integer slot = chooseSlot();
+        Integer slot = chooseSlot("Save Game");
         if (slot != null) {
             controller.saveGame(slot);
         }
@@ -154,7 +153,7 @@ public class InventoryPanel extends BackgroundPanel {
      * The game stays open if the player cancels or the save fails, so no progress is lost.
      */
     private void saveAndQuit() {
-        Integer slot = chooseSlot();
+        Integer slot = chooseSlot("Save and Quit");
         if (slot != null && controller.saveGame(slot)) {
             System.exit(NORMAL_EXIT);
         }
@@ -174,24 +173,11 @@ public class InventoryPanel extends BackgroundPanel {
     }
 
     /**
-     * Asks the player to pick a save slot.
-     *
-     * @return the chosen slot number, or null if the player cancels
-     */
-    private Integer chooseSlot() {
-        Integer[] slots = new Integer[SaveManager.SLOT_COUNT];
-        for (int i = 0; i < slots.length; i++) {
-            slots[i] = SaveManager.FIRST_SLOT + i;
-        }
-        return (Integer) JOptionPane.showInputDialog(this, "Choose a save slot:", "Save Game",
-                JOptionPane.QUESTION_MESSAGE, null, slots, slots[0]);
-    }
-
-    /**
      * Updates the title, the hero stats, and the inventory list from the game state.
      */
     private void refresh() {
-        titleLabel.setText("Before encounter " + gameState.getEncounter() + " of " + EncounterFactory.LAST_ENCOUNTER);
+        titleLabel.setText(gameState.getPartyName() + "  -  before encounter " + gameState.getEncounter()
+                + " of " + EncounterFactory.LAST_ENCOUNTER);
 
         StringBuilder heroText = new StringBuilder();
         for (Hero hero : gameState.getHeroes().getMembers()) {

@@ -15,6 +15,10 @@ public class TextSaveManager implements SaveManager {
 
     private static final String FILE_EXTENSION = ".txt";
 
+    private static final String PARTY_KEY = "Party";
+
+    private static final String ROUNDS_KEY = "Rounds";
+
     private static final String ENCOUNTER_KEY = "Encounter";
 
     private static final String HERO_KEY = "Hero";
@@ -31,7 +35,8 @@ public class TextSaveManager implements SaveManager {
 
     /**
      * Writes the game state to the slot's {@code .txt} file.
-     * <p>Writes the encounter, one line per hero followed by its equipped items, and one line per item with its count.</p>
+     * <p>Writes the party name, the encounter, the rounds used, one line per hero followed by its equipped items,
+     * and one line per item with its count.</p>
      *
      * @param state the game state to save
      * @param slot  the slot number
@@ -42,7 +47,9 @@ public class TextSaveManager implements SaveManager {
         File file = getFile(slot);
         file.getParentFile().mkdirs(); // create saves/ if it doesn't exist
         try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
+            out.println(PARTY_KEY + "=" + state.getPartyName());
             out.println(ENCOUNTER_KEY + "=" + state.getEncounter());
+            out.println(ROUNDS_KEY + "=" + state.getTotalRounds());
             for (Hero hero : state.getHeroes().getMembers()) {
                 out.println(hero.toSaveFormat());
                 if (hero.getWeapon() != null) {
@@ -75,7 +82,9 @@ public class TextSaveManager implements SaveManager {
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             Party<Hero> heroes = new Party<>();
             Inventory inventory = new Inventory();
+            String partyName = null;
             int encounter = GameState.FIRST_ENCOUNTER;
+            int totalRounds = 0;
             String line;
             Hero lastHero = null;
 
@@ -88,7 +97,9 @@ public class TextSaveManager implements SaveManager {
                 String key = keyAndValue[0];
                 String value = keyAndValue[1];
                 switch (key) {
+                    case PARTY_KEY -> partyName = value;
                     case ENCOUNTER_KEY -> encounter = Integer.parseInt(value);
+                    case ROUNDS_KEY -> totalRounds = Integer.parseInt(value);
                     case HERO_KEY -> {
                         String[] heroDetails = value.split(",");
                         Hero hero = HeroFactory.create(heroDetails[0], heroDetails[1]);
@@ -118,8 +129,11 @@ public class TextSaveManager implements SaveManager {
             if (heroes.getMembers().isEmpty()) {
                 throw new CorruptedSaveException("Save in slot " + slot + " has no heroes");
             }
+            if (partyName == null) {
+                throw new CorruptedSaveException("Save in slot " + slot + " has no party name");
+            }
 
-            return new GameState(heroes, inventory, encounter);
+            return new GameState(partyName, heroes, inventory, encounter, totalRounds);
         } catch (IOException | IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
             throw new CorruptedSaveException("Save in slot " + slot + " is damaged", e);
         }

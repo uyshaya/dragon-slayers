@@ -2,13 +2,12 @@ package com.dragonslayers.view;
 
 import com.dragonslayers.assets.SpriteLoader;
 import com.dragonslayers.controller.GameController;
-import com.dragonslayers.io.SaveManager;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * The first screen. Shows the title and the New Game, Load Game, and Quit buttons
+ * The first screen. Shows the title and the New Game, Load Game, Leaderboard, and Quit buttons
  * on top of a pixel-art dungeon background.
  */
 public class MainMenuPanel extends BackgroundPanel {
@@ -21,7 +20,7 @@ public class MainMenuPanel extends BackgroundPanel {
 
     private static final int TITLE_SPRITE_SCALE = 10;
 
-    private static final int BUTTON_ROWS = 3;
+    private static final int BUTTON_ROWS = 4;
 
     private static final int BUTTON_COLUMNS = 1;
 
@@ -47,16 +46,19 @@ public class MainMenuPanel extends BackgroundPanel {
 
         JButton newGameButton = new JButton("New Game");
         JButton loadButton = new JButton("Load Game");
+        JButton leaderboardButton = new JButton("Leaderboard");
         JButton quitButton = new JButton("Quit");
 
         newGameButton.addActionListener(e -> gameController.newGame());
         loadButton.addActionListener(e -> chooseSlotAndLoad(gameController));
+        leaderboardButton.addActionListener(e -> gameController.showLeaderboard());
         quitButton.addActionListener(e -> System.exit(NORMAL_EXIT));
 
         JPanel buttons = new JPanel(new GridLayout(BUTTON_ROWS, BUTTON_COLUMNS, 0, BUTTON_GAP));
         buttons.setOpaque(false); // see-through, so the background shows around the buttons
         buttons.add(newGameButton);
         buttons.add(loadButton);
+        buttons.add(leaderboardButton);
         buttons.add(quitButton);
 
         JPanel center = new JPanel(); // FlowLayout keeps the buttons at their normal width
@@ -77,13 +79,7 @@ public class MainMenuPanel extends BackgroundPanel {
      * @param gameController the controller that loads the game
      */
     private void chooseSlotAndLoad(GameController gameController) {
-        Integer[] slots = new Integer[SaveManager.SLOT_COUNT];
-        for (int i = 0; i < slots.length; i++) {
-            slots[i] = SaveManager.FIRST_SLOT + i;
-        }
-
-        Integer slot = (Integer) JOptionPane.showInputDialog(this, "Choose a save slot:", "Load Game",
-                JOptionPane.QUESTION_MESSAGE, null, slots, slots[0]);
+        Integer slot = chooseSlot("Load Game");
         if (slot == null) {
             return; // the player pressed Cancel
         }

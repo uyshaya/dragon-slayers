@@ -7,6 +7,8 @@ import com.dragonslayers.model.Hero;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Queue;
  * <p>Each character has its sprite, its name, a health bar, and its HP. A knocked-out character is drawn faded,
  * and the hero whose turn it is has a gold frame. Enemies are mirrored so they face the heroes.
  * Sprites are scaled with nearest-neighbour interpolation so the pixels stay sharp.</p>
+ * <p>Living characters gently bob up and down while idle, driven by a second Timer.</p>
  * <p>It can also play short projectile animations, such as a fireball flying from a hero to an enemy
  * or a healing orb flying to an ally. Several can be added at once; they play one after another.
  * A {@link Timer} moves the projectile a little on every tick and repaints the canvas.</p>
@@ -62,11 +65,27 @@ public class BattleCanvas extends JPanel {
 
     private static final int PLATE_CORNER = 16;
 
+    private static final Color ENEMY_TARGET_COLOR = new Color(230, 60, 60); // red: an enemy you can hit
+
+    private static final Color ALLY_TARGET_COLOR = new Color(80, 220, 100); // green: an ally you can help
+
+    private static final int TARGET_OUTLINE_THICKNESS = 3;
+
     private static final int FRAME_DELAY_MS = 20;
 
     private static final int EFFECT_FRAMES = 40;
 
     private static final int EFFECT_SCALE = 5;
+
+    private static final int IDLE_DELAY_MS = 50;
+
+    private static final int BOB_HEIGHT = 2; // how many pixels a sprite moves up and down
+
+    private static final int ACTIVE_BOB_HEIGHT = 5; // a bigger bounce for the hero whose turn it is
+
+    private static final double BOB_SPEED = 0.15; // how far the bob moves on each tick, in radians
+
+    private static final double BOB_ROW_DELAY = 1.0; // each row starts a little behind the one above
 
     private final Timer effectTimer = new Timer(FRAME_DELAY_MS, e -> nextEffectFrame());
 
@@ -81,6 +100,12 @@ public class BattleCanvas extends JPanel {
     private Point effectEnd;
 
     private int effectFrame;
+
+    private final Timer idleTimer = new Timer(IDLE_DELAY_MS, e -> nextIdleTick());
+
+    private int idleTick;
+
+    private List<? extends GameCharacter> targets = List.of(); // characters the player can click right now
 
     private final Queue<Effect> waitingEffects = new ArrayDeque<>(); // first in, first out
 
@@ -98,6 +123,86 @@ public class BattleCanvas extends JPanel {
      * Creates an empty canvas. The battle is given later by {@link #showBattle}.
      */
     public BattleCanvas() {
+        addMouseMotionListener(new MouseMotionAdapter() {
+            /**
+             * Shows a hand cursor while the mouse is over a character the player can click.
+             *
+             * @param e the mouse movement
+             */
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                updateCursor(e.getX(), e.getY());
+            }
+        });
+    }
+
+    /**
+     * Sets which characters the player can click right now. They get a colored outline:
+     * red for enemies, green for allies. An empty list means the player is not choosing a target.
+     *
+     * @param targets the characters that can be clicked
+     */
+    public void setTargets(List<? extends GameCharacter> targets) {
+        this.targets = targets;
+        if (targets.isEmpty()) {
+            setCursor(Cursor.getDefaultCursor());
+        }
+        repaint();
+    }
+
+    /**
+     * Returns the character whose plate is at the given point, for example where the player clicked.
+     *
+     * @param x the x position inside the canvas
+     * @param y the y position inside the canvas
+     * @return the character there, or null if the point is not on any plate
+     */
+    public GameCharacter getCharacterAt(int x, int y) {
+        if (battle == null) {
+            return null;
+        }
+        for (GameCharacter character : battle.getHeroes().getMembers()) {
+            if (getPlateBounds(character).contains(x, y)) {
+                return character;
+            }
+        }
+        for (GameCharacter character : battle.getEnemies().getMembers()) {
+            if (getPlateBounds(character).contains(x, y)) {
+                return character;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Shows a hand cursor over a character that can be clicked, and the normal arrow everywhere else.
+     *
+     * @param x the mouse's x position
+     * @param y the mouse's y position
+     */
+    private void updateCursor(int x, int y) {
+        GameCharacter character = getCharacterAt(x, y);
+        if (character != null && targets.contains(character)) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        } else {
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }
+
+    /**
+     * Returns the rectangle of a character's plate: the sprite plus the text beside it, with padding.
+     * Drawing the plate, drawing the target outline, and checking clicks all use this rectangle.
+     *
+     * @param character the character
+     * @return the plate's rectangle inside the canvas
+     */
+    private Rectangle getPlateBounds(GameCharacter character) {
+        Point position = getSpritePosition(character);
+        BufferedImage sprite = SpriteLoader.getSprite(character.getClassName());
+        int width = sprite.getWidth() * SPRITE_SCALE;
+        int height = sprite.getHeight() * SPRITE_SCALE;
+        return new Rectangle(position.x - PLATE_PADDING, position.y - PLATE_PADDING,
+                width + TEXT_GAP + PLATE_TEXT_WIDTH + 2 * PLATE_PADDING, height + 2 * PLATE_PADDING);
     }
 
     /**
@@ -112,7 +217,37 @@ public class BattleCanvas extends JPanel {
         }
         this.battle = battle;
         this.currentHero = currentHero;
+        if (!idleTimer.isRunning()) {
+            idleTimer.start(); // keeps the idle bob going for as long as the game runs
+        }
         repaint(); // asks Swing to call paintComponent soon
+    }
+
+    /**
+     * Moves the idle bob one step and redraws. Called by the idle timer on every tick.
+     */
+    private void nextIdleTick() {
+        idleTick++;
+        repaint();
+    }
+
+    /**
+     * Returns how far a sprite is moved up or down right now, for the idle bob.
+     * <p>{@code Math.sin} goes smoothly between -1 and 1 as the tick count grows,
+     * so the sprite moves smoothly up and down. The hero whose turn it is bounces higher
+     * ({@code ACTIVE_BOB_HEIGHT}) than everyone else ({@code BOB_HEIGHT}). Knocked-out characters stay still.</p>
+     *
+     * @param character the character to move
+     * @param row       the character's row, so each row bobs a little after the one above
+     * @return the vertical offset in pixels
+     */
+    private int getBobOffset(GameCharacter character, int row) {
+        if (character.isKnockedOut()) {
+            return 0;
+        }
+        int height = (character == currentHero) ? ACTIVE_BOB_HEIGHT : BOB_HEIGHT;
+        double angle = idleTick * BOB_SPEED + row * BOB_ROW_DELAY;
+        return (int) Math.round(Math.sin(angle) * height);
     }
 
     /**
@@ -198,9 +333,10 @@ public class BattleCanvas extends JPanel {
      * @param faceLeft   true to mirror the sprites so they face left
      */
     private void drawSide(Graphics2D g2, List<? extends GameCharacter> characters, boolean faceLeft) {
-        for (GameCharacter character : characters) {
+        for (int row = 0; row < characters.size(); row++) {
+            GameCharacter character = characters.get(row);
             Point position = getSpritePosition(character);
-            drawCharacter(g2, character, position.x, position.y, faceLeft);
+            drawCharacter(g2, character, position.x, position.y, faceLeft, getBobOffset(character, row));
         }
     }
 
@@ -265,26 +401,32 @@ public class BattleCanvas extends JPanel {
      * @param x         the left edge of the sprite
      * @param y         the top edge of the sprite
      * @param faceLeft  true to mirror the sprite so it faces left
+     * @param bob       how many pixels to move only the sprite up or down, for the idle animation
      */
-    private void drawCharacter(Graphics2D g2, GameCharacter character, int x, int y, boolean faceLeft) {
+    private void drawCharacter(Graphics2D g2, GameCharacter character, int x, int y, boolean faceLeft, int bob) {
         BufferedImage sprite = SpriteLoader.getSprite(character.getClassName());
         int width = sprite.getWidth() * SPRITE_SCALE;
         int height = sprite.getHeight() * SPRITE_SCALE;
 
         // a dark rounded plate behind the sprite and its text, so the character stands out from the background
+        Rectangle plate = getPlateBounds(character);
         g2.setColor(PLATE_COLOR);
-        g2.fillRoundRect(x - PLATE_PADDING, y - PLATE_PADDING,
-                width + TEXT_GAP + PLATE_TEXT_WIDTH + 2 * PLATE_PADDING, height + 2 * PLATE_PADDING,
-                PLATE_CORNER, PLATE_CORNER);
+        g2.fillRoundRect(plate.x, plate.y, plate.width, plate.height, PLATE_CORNER, PLATE_CORNER);
+        if (targets.contains(character)) { // the player can click this character right now
+            g2.setColor(character instanceof Hero ? ALLY_TARGET_COLOR : ENEMY_TARGET_COLOR);
+            g2.setStroke(new BasicStroke(TARGET_OUTLINE_THICKNESS));
+            g2.drawRoundRect(plate.x, plate.y, plate.width, plate.height, PLATE_CORNER, PLATE_CORNER);
+        }
 
         Composite normal = g2.getComposite();
         if (character.isKnockedOut()) {
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, KNOCKED_OUT_ALPHA)); // see-through
         }
+        int spriteY = y + bob; // only the sprite bobs, the plate and text stay still
         if (faceLeft) {
-            g2.drawImage(sprite, x + width, y, -width, height, null); // a negative width draws the image mirrored
+            g2.drawImage(sprite, x + width, spriteY, -width, height, null); // a negative width draws the image mirrored
         } else {
-            g2.drawImage(sprite, x, y, width, height, null);
+            g2.drawImage(sprite, x, spriteY, width, height, null);
         }
         g2.setComposite(normal);
 
@@ -301,6 +443,10 @@ public class BattleCanvas extends JPanel {
         drawHealthBar(g2, character, textX, barY);
         g2.setColor(TEXT_COLOR);
         g2.drawString(describeState(character), textX, barY + BAR_HEIGHT + LINE_HEIGHT);
+        if (character instanceof Hero hero) { // only heroes have limited ability uses
+            g2.drawString(hero.getAbilityName() + " " + hero.getAbilityUsesLeft() + "/" + hero.getMaxAbilityUses(),
+                    textX, barY + BAR_HEIGHT + 2 * LINE_HEIGHT);
+        }
     }
 
     /**

@@ -66,7 +66,7 @@ Each row is a requirement from Chapter III of the spec.
 |---|---|---|
 | ✓ | Two collection types from `java.util` | `ArrayList` in `Party`, `HashMap` in `Inventory` |
 | ✓ | Generic class or method | `Party<T extends GameCharacter>` |
-| ✓ | Sorting with a `Comparator` | `Battle` (`BY_SPEED`) |
+| ✓ | Sorting with a `Comparator` | `Battle` (`BY_SPEED`), `Leaderboard` (`BY_RANK`: wins, then fewest rounds, with `thenComparingInt`) |
 | ✓ | Non-trivial Stream API use | `Inventory.getUsableItemNames()` |
 
 ### §3 Exception handling
@@ -82,7 +82,7 @@ Each row is a requirement from Chapter III of the spec.
 
 | Done | Requirement | Where |
 |---|---|---|
-| ✓ | Human-readable text saves | `TextSaveManager` (`saves/slot1.txt` to `slot3.txt`) |
+| ✓ | Human-readable text saves | `TextSaveManager` (`saves/slot1.txt` to `slot3.txt`), `LeaderboardManager` (`saves/leaderboard.txt`) |
 | ✓ | Binary saves with `ObjectOutputStream` | `BinarySaveManager` |
 | ✓ | Corrupted or missing saves handled | `SaveNotFoundException`, `CorruptedSaveException` in `load()` of both save managers |
 | ✓ | Three save slots | `SaveManager.SLOT_COUNT` |
@@ -112,7 +112,8 @@ Each row is a requirement from Chapter III of the spec.
 
 | Done | Bonus | Where |
 |---|---|---|
-| ✓ | Animation with `javax.swing.Timer` (+3) | `BattleCanvas.playProjectile()`: when a hero or enemy attacks or uses an ability, an effect sprite flies to the target, one after another |
+| ✓ | Animation with `javax.swing.Timer` (+3) | `BattleCanvas.playProjectile()`: when a hero or enemy attacks or uses an ability, an effect sprite flies to the target, one after another; living characters bob up and down while idle |
+| ✓ | Persistent achievements across save files (+2) | `Leaderboard` and `LeaderboardManager`: each dragon win is recorded for the party name in `saves/leaderboard.txt`, separate from the save slots; the main menu shows the top three |
 
 ## Who did what
 
@@ -141,6 +142,10 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `EncounterFactory` with five encounters of increasing difficulty ending with the boss, added hero turn tracking to `BattleEngine` (`getCurrentHero()`, `startRound()`, `endHeroTurn()`), and added `abilityTargetsAllies()` to `Hero`, overridden in `Cleric`.
 - Started `BattlePanel` (the inner class `ActionButtonListener`, the generic method `chooseTarget()`, and `startBattle()`) and added `startEncounter()` to `GameController`.
 - Wrote `InventoryPanel` (the `BorderLayout` with the title, Party, and Inventory areas, and `showState()`) and added `showInventory()` to `GameController`, so the screen appears after each win and after loading a save.
+- Designed the leaderboard: a party name, wins counted per party name, and the top three parties shown, ranked by wins and then the fastest win.
+- Wrote `LeaderboardEntry` (party name, wins, and best rounds, with two constructors and `recordWin()`) and started `Leaderboard` (the `BY_RANK` comparator and `recordWin()`).
+- Designed the ability use limit: each hero can use its ability only a set number of times per encounter, so that Attack is still worth choosing.
+- Designed click-to-target: Attack and Ability targets are chosen by clicking the enemy or ally on the battle screen instead of a dialog, with Esc to cancel.
 
 ## AI usage disclosure
 
@@ -171,8 +176,13 @@ I used Claude for the following:
 - Finished `refresh()` and `describe()` in `InventoryPanel` at my request (the hero text, the null checks for equipment, and the inventory stream), and fixed the Party scroll pane.
 - Wrote the remaining GUI work at my request, after I finished the object-oriented parts of the project: the Use Item, Save Game, and Next Battle buttons in `InventoryPanel`, `saveGame()` and `continueGame()` in `GameController`, the Binary or Text choice when loading (`loadGame()` picks the matching `SaveManager`), `EndPanel` for the Victory and Game Over screens, `BattleCanvas` (the `paintComponent` drawing with the sprites, health bars, faded knocked-out characters, and the frame on the current hero), `SpriteLoader` with its `HashMap` cache, the sprites on the main menu and the character cards, and the mirroring that makes enemies face the heroes.
 - Found the two CC0 sprite packs (Kenney's Tiny Dungeon and Clint Bellanger's Tiny Creatures) at my request, picked a tile for each hero and enemy, and copied them into `assets/sprites/`.
-- Wrote the attack and ability animations for the heroes and enemies at my request, including the turn tracking they need in `Enemy` (`getLastTarget()`, `usedAbilityLastTurn()`, `abilityTargetsSelf()`) and `BattleEngine` (`getEnemiesThatActed()`).
+- Wrote the attack and ability animations for the heroes and enemies and the idle bob animation at my request, including the turn tracking they need in `Enemy` (`getLastTarget()`, `usedAbilityLastTurn()`, `abilityTargetsSelf()`) and `BattleEngine` (`getEnemiesThatActed()`).
 - Wrote the screen and battle backgrounds at my request (`BackgroundPanel`, an abstract panel that every screen extends, and the battle arena drawn by `BattleCanvas`), using Kenney's Tiny Dungeon sample scene and tiles.
+- Wrote the encounter rewards at my request: `createReward()` in `EncounterFactory` (Cloth Armor, an Iron Sword, Padded Armor, Leather Armor, and the Dragon Key key item for defeating the dragon), the step in `GameController.battleEnded()` that adds them to the inventory, the Save Game button on the Victory screen, and the shared `chooseSlot()` dialog in `BackgroundPanel`.
+- Refined my leaderboard idea by suggesting rounds instead of real time for the fastest win, and keeping every party while showing only the top three. Fixed `Leaderboard` at my request (`equals` instead of `==`, the first-win case with `Optional`, `getAllParties()`, and the Javadoc).
+- Wrote the rest of the leaderboard feature at my request: the party name and round total in `GameState` and the text save, `LeaderboardManager`, `recordVictory()`, `showLeaderboard()`, and the finished-save message in `GameController`, the Leaderboard button, and the party name prompt with the shared `askForName()` check.
+- Wrote the ability use limit at my request (3 uses per encounter, `ABILITY_USES_PER_ENCOUNTER` in `GameBalance`): the counter and its methods in `Hero`, `checkAbilityUses()` in `BattleEngine`, which throws `InvalidActionException` when no uses are left, the reset in `startEncounter()`, and the uses shown on each hero's battle plate.
+- Wrote the click-to-target feature at my request: the target choice in `BattlePanel` (`pendingAction`, `chooseClickedTarget()`, `getValidTargets()`, an anonymous `MouseAdapter`, and the Esc key binding) and, in `BattleCanvas`, `getCharacterAt()`, `getPlateBounds()`, the red and green target outlines, and the hand cursor.
 
 I wrote all other code myself.
 

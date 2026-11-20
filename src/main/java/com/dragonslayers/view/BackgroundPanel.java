@@ -1,6 +1,7 @@
 package com.dragonslayers.view;
 
 import com.dragonslayers.assets.SpriteLoader;
+import com.dragonslayers.io.SaveManager;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -45,6 +46,21 @@ public abstract class BackgroundPanel extends JPanel {
         g2.drawImage(background, 0, 0, getWidth(), getHeight(), null);
         g2.setColor(BACKGROUND_SHADE);
         g2.fillRect(0, 0, getWidth(), getHeight());
+    }
+
+    /**
+     * Asks the player to pick a save slot. Used by every screen that saves or loads.
+     *
+     * @param title the dialog's title, for example {@code "Save Game"}
+     * @return the chosen slot number, or null if the player cancels
+     */
+    protected Integer chooseSlot(String title) {
+        Integer[] slots = new Integer[SaveManager.SLOT_COUNT];
+        for (int i = 0; i < slots.length; i++) {
+            slots[i] = SaveManager.FIRST_SLOT + i;
+        }
+        return (Integer) JOptionPane.showInputDialog(this, "Choose a save slot:", title,
+                JOptionPane.QUESTION_MESSAGE, null, slots, slots[0]);
     }
 
     /**

@@ -12,12 +12,16 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * The battle screen. Shows the party, the enemies, the combat log, and the action buttons.
- * <p>The player acts with one hero at a time, in speed order. The enemies act after the last hero.</p>
+ * <p>The player acts with one hero at a time, in speed order. The enemies act after the last hero.
+ * Attack and Ability ask the player to click a target on the battle drawing. Esc cancels the choice.</p>
  */
 public class BattlePanel extends BackgroundPanel {
 
@@ -39,6 +43,8 @@ public class BattlePanel extends BackgroundPanel {
 
     private static final int BUTTON_GROUP_GAP = 40;
 
+    private static final String CANCEL_KEY = "cancelTarget";
+
     private final GameController controller;
 
     private final JLabel encounterLabel = new JLabel("", SwingConstants.LEFT);
@@ -57,6 +63,7 @@ public class BattlePanel extends BackgroundPanel {
 
     private Inventory inventory;
 
+    private String pendingAction; // ATTACK or ABILITY while the player is choosing a target, otherwise null
 
     /**
      * Creates the battle screen. The battle itself is given later by {@link #startBattle}.
@@ -81,6 +88,31 @@ public class BattlePanel extends BackgroundPanel {
         add(header, BorderLayout.NORTH);
 
         add(canvas, BorderLayout.CENTER);
+        canvas.addMouseListener(new MouseAdapter() {
+            /**
+             * Uses the click as the target of the chosen Attack or Ability.
+             *
+             * @param e the mouse press on the battle drawing
+             */
+            @Override
+            public void mousePressed(MouseEvent e) {
+                chooseClickedTarget(e.getX(), e.getY());
+            }
+        });
+
+        // Esc cancels the target choice while the battle screen is showing
+        getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), CANCEL_KEY);
+        getActionMap().put(CANCEL_KEY, new AbstractAction() {
+            /**
+             * Cancels the target choice.
+             *
+             * @param e the key press
+             */
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cancelTargetChoice();
+            }
+        });
 
         logArea.setEditable(false);
         logArea.setLineWrap(true);
@@ -117,6 +149,7 @@ public class BattlePanel extends BackgroundPanel {
         this.battle = battle;
         this.engine = engine;
         this.inventory = inventory;
+        pendingAction = null;
         encounterLabel.setText("Encounter " + encounter + " of " + EncounterFactory.LAST_ENCOUNTER);
         // an empty panel on the right as wide as the encounter label keeps the turn label centered on the screen
         headerBalance.setPreferredSize(encounterLabel.getPreferredSize());
@@ -125,11 +158,13 @@ public class BattlePanel extends BackgroundPanel {
 
     /**
      * Handles all four action buttons. The button's text says which action was chosen.
+     * <p>Attack and Ability start a target choice (pressing the same button again stops it).
+     * Defend and Item act right away and end any target choice.</p>
      */
     private class ActionButtonListener implements ActionListener {
 
         /**
-         * Runs the chosen action for the current hero, then updates the screen.
+         * Runs or starts the chosen action for the current hero, then updates the screen.
          *
          * @param e the button click
          */
@@ -139,39 +174,123 @@ public class BattlePanel extends BackgroundPanel {
             int roundBefore = battle.getRound();
             try {
                 switch (e.getActionCommand()) {
-                    case ATTACK -> {
-                        Enemy target = chooseTarget("Attack whom?", battle.getEnemies().getAliveMembers());
-                        if (target != null) {
-                            engine.heroAttack(hero, target);
-                            canvas.playProjectile(hero, target, ATTACK_SPRITE); // only for show, same for every hero and enemy
-                        }
-                    }
+                    case ATTACK -> toggleTargetChoice(ATTACK);
                     case ABILITY -> {
-                        GameCharacter target;
-                        if (hero.abilityTargetsAllies()) {
-                            target = chooseTarget(hero.getAbilityName() + " on whom?", battle.getHeroes().getAliveMembers());
-                        } else {
-                            target = chooseTarget(hero.getAbilityName() + " on whom?", battle.getEnemies().getAliveMembers());
-                        }
-                        if (target != null) {
-                            engine.heroAbility(hero, target);
-                            // only for show: the effect sprite is named after the ability, for example fireball.png
-                            canvas.playProjectile(hero, target, hero.getAbilityName());
-                        }
+                        engine.checkAbilityUses(hero); // shows a message right away if no uses are left
+                        toggleTargetChoice(ABILITY);
                     }
-                    case DEFEND -> engine.heroDefend(hero);
-                    case ITEM -> useItem(hero);
+                    case DEFEND -> {
+                        pendingAction = null;
+                        engine.heroDefend(hero);
+                    }
+                    case ITEM -> {
+                        pendingAction = null;
+                        useItem(hero);
+                    }
                     default -> throw new InvalidActionException("Unknown action: " + e.getActionCommand());
                 }
-                if (battle.getRound() > roundBefore) {
-                    playEnemyTurns(); // the round went up, so the enemies acted after this hero
-                }
             } catch (InvalidActionException ex) {
-                JOptionPane.showMessageDialog(BattlePanel.this, ex.getMessage(),
-                        "Cannot do that", JOptionPane.WARNING_MESSAGE);
+                showWarning(ex.getMessage());
             }
-            refresh();
+            finishAction(roundBefore);
         }
+    }
+
+    /**
+     * Starts choosing a target for Attack or Ability, or stops if that choice is already active.
+     * Pressing the other button switches the choice.
+     *
+     * @param action {@link #ATTACK} or {@link #ABILITY}
+     */
+    private void toggleTargetChoice(String action) {
+        if (action.equals(pendingAction)) {
+            pendingAction = null;
+        } else {
+            pendingAction = action;
+        }
+    }
+
+    /**
+     * Cancels the target choice, if one is active. Called when the player presses Esc.
+     */
+    private void cancelTargetChoice() {
+        if (pendingAction == null) {
+            return;
+        }
+        pendingAction = null;
+        refresh();
+    }
+
+    /**
+     * Uses a click on the battle drawing as the target of the chosen Attack or Ability.
+     * <p>A click outside a highlighted target does nothing, so the player can simply click again.</p>
+     *
+     * @param x the click's x position inside the battle drawing
+     * @param y the click's y position inside the battle drawing
+     */
+    private void chooseClickedTarget(int x, int y) {
+        if (pendingAction == null || battle.isOver()) {
+            return; // not choosing a target right now
+        }
+        GameCharacter target = canvas.getCharacterAt(x, y);
+        if (target == null || !getValidTargets().contains(target)) {
+            return; // missed, or clicked someone who cannot be chosen
+        }
+
+        Hero hero = engine.getCurrentHero();
+        String action = pendingAction;
+        pendingAction = null;
+        int roundBefore = battle.getRound();
+        try {
+            if (ATTACK.equals(action) && target instanceof Enemy enemy) {
+                engine.heroAttack(hero, enemy);
+                canvas.playProjectile(hero, enemy, ATTACK_SPRITE); // only for show, same for every hero and enemy
+            } else if (ABILITY.equals(action)) {
+                engine.heroAbility(hero, target);
+                // only for show: the effect sprite is named after the ability, for example fireball.png
+                canvas.playProjectile(hero, target, hero.getAbilityName());
+            }
+        } catch (InvalidActionException ex) {
+            showWarning(ex.getMessage());
+        }
+        finishAction(roundBefore);
+    }
+
+    /**
+     * Returns the characters the player can click for the current choice:
+     * living allies for a healing ability, living enemies otherwise, or nobody when not choosing.
+     *
+     * @return the valid targets
+     */
+    private List<? extends GameCharacter> getValidTargets() {
+        if (pendingAction == null) {
+            return List.of();
+        }
+        if (ABILITY.equals(pendingAction) && engine.getCurrentHero().abilityTargetsAllies()) {
+            return battle.getHeroes().getAliveMembers();
+        }
+        return battle.getEnemies().getAliveMembers();
+    }
+
+    /**
+     * Plays the enemies' animations if they acted, then updates the screen. Called after every player action.
+     *
+     * @param roundBefore the round number before the action; if it went up, the enemies acted
+     */
+    private void finishAction(int roundBefore) {
+        if (battle.getRound() > roundBefore) {
+            playEnemyTurns();
+        }
+        refresh();
+    }
+
+    /**
+     * Shows a warning message, for example when an action is not allowed.
+     *
+     * @param message the message to show
+     */
+    private void showWarning(String message) {
+        JOptionPane.showMessageDialog(this, message, "Cannot do that", JOptionPane.WARNING_MESSAGE);
     }
 
     /**
@@ -252,19 +371,30 @@ public class BattlePanel extends BackgroundPanel {
     }
 
     /**
-     * Updates the log, the turn label, and the battle drawing. Tells the controller if the battle is over.
+     * Updates the log, the turn label, the battle drawing, and the clickable targets.
+     * Tells the controller if the battle is over.
      */
     private void refresh() {
         logArea.setText(String.join("\n", battle.getLog()));
         logArea.setCaretPosition(logArea.getDocument().getLength()); // scroll to the newest line
 
         if (battle.isOver()) {
-            controller.battleEnded(battle.isWon());
+            pendingAction = null;
+            canvas.setTargets(List.of());
+            controller.battleEnded(battle.isWon(), battle.getRound());
             return;
         }
 
         Hero hero = engine.getCurrentHero();
-        turnLabel.setText("Round " + battle.getRound() + " - " + hero.getName() + "'s turn (" + hero.getClassName() + ")");
+        if (ATTACK.equals(pendingAction)) {
+            turnLabel.setText(hero.getName() + ": click an enemy to attack (Esc cancels)");
+        } else if (ABILITY.equals(pendingAction)) {
+            String who = hero.abilityTargetsAllies() ? "an ally" : "an enemy";
+            turnLabel.setText(hero.getName() + ": click " + who + " for " + hero.getAbilityName() + " (Esc cancels)");
+        } else {
+            turnLabel.setText("Round " + battle.getRound() + " - " + hero.getName() + "'s turn (" + hero.getClassName() + ")");
+        }
         canvas.showBattle(battle, hero);
+        canvas.setTargets(getValidTargets());
     }
 }

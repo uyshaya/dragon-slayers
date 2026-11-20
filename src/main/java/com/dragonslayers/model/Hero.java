@@ -11,6 +11,8 @@ public abstract class Hero extends GameCharacter implements Saveable {
 
     private Armor armor;
 
+    private int abilityUsesLeft = GameBalance.ABILITY_USES_PER_ENCOUNTER;
+
     /**
      * Creates a hero with the given stats.
      *
@@ -79,6 +81,49 @@ public abstract class Hero extends GameCharacter implements Saveable {
      */
     public boolean abilityTargetsAllies() {
         return false;
+    }
+
+    /**
+     * Returns how many times this hero can still use its ability in the current encounter.
+     *
+     * @return the uses left
+     */
+    public int getAbilityUsesLeft() {
+        return abilityUsesLeft;
+    }
+
+    /**
+     * Returns how many ability uses every hero gets at the start of an encounter.
+     *
+     * @return the uses per encounter
+     */
+    public int getMaxAbilityUses() {
+        return GameBalance.ABILITY_USES_PER_ENCOUNTER;
+    }
+
+    /**
+     * Says whether this hero can still use its ability in the current encounter.
+     *
+     * @return true if at least one use is left
+     */
+    public boolean hasAbilityUses() {
+        return abilityUsesLeft > 0;
+    }
+
+    /**
+     * Takes away one ability use. Called by the battle engine after the ability is used.
+     */
+    public void spendAbilityUse() {
+        if (abilityUsesLeft > 0) {
+            abilityUsesLeft--;
+        }
+    }
+
+    /**
+     * Gives back all ability uses. Called at the start of every encounter.
+     */
+    public void resetAbilityUses() {
+        abilityUsesLeft = GameBalance.ABILITY_USES_PER_ENCOUNTER;
     }
 
 }

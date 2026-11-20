@@ -16,6 +16,7 @@ public final class GameBalance {
     static final int DEFENSE_DIVISOR = 2;
     static final int RANDOM_DAMAGE_MAX = 4;
     static final int DEFEND_DAMAGE_DIVISOR = 2;
+    static final int ABILITY_USES_PER_ENCOUNTER = 3;
 
     // ----- Heroes -----
 

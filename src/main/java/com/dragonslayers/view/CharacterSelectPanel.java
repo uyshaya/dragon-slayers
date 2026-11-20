@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The screen where the player picks and names three heroes.
+ * The screen where the player picks and names three heroes, then names the party.
  * <p>Each class card shows the class stats and signature ability.</p>
  */
 public class CharacterSelectPanel extends BackgroundPanel {
@@ -61,7 +61,12 @@ public class CharacterSelectPanel extends BackgroundPanel {
         JButton backButton = new JButton("Back");
         clearButton.addActionListener(e -> reset());
         backButton.addActionListener(e -> controller.showMainMenu());
-        startButton.addActionListener(e -> controller.startGame(createParty()));
+        startButton.addActionListener(e -> {
+            String partyName = askForName("Name your party:");
+            if (partyName != null) {
+                controller.startGame(createParty(), partyName);
+            }
+        });
 
         JPanel bottom = new JPanel();
         bottom.setOpaque(false);
@@ -126,22 +131,38 @@ public class CharacterSelectPanel extends BackgroundPanel {
             return;
         }
 
-        String name = JOptionPane.showInputDialog(this, "Name your " + className + ":");
+        String name = askForName("Name your " + className + ":");
         if (name == null) {
-            return; // the player pressed Cancel
-        }
-        name = name.trim();
-        if (name.isEmpty()) {
-            showError("Name cannot be empty.");
-            return;
-        }
-        if (name.contains(",") || name.contains("=")) {
-            showError("Name cannot contain , or =");
-            return;
+            return; // cancelled, or the name was not allowed
         }
 
         chosenHeroes.add(HeroFactory.create(className, name));
         updatePartyLabel();
+    }
+
+    /**
+     * Asks the player for a name and checks it. Used for hero names and the party name.
+     * <p>A name cannot be empty and cannot contain {@code ,} or {@code =}, because the save files use them
+     * as separators. Shows a message if the name is not allowed.</p>
+     *
+     * @param prompt the question to show
+     * @return the name without extra spaces, or null if the player cancels or the name is not allowed
+     */
+    private String askForName(String prompt) {
+        String name = JOptionPane.showInputDialog(this, prompt);
+        if (name == null) {
+            return null; // the player pressed Cancel
+        }
+        name = name.trim();
+        if (name.isEmpty()) {
+            showError("Name cannot be empty.");
+            return null;
+        }
+        if (name.contains(",") || name.contains("=")) {
+            showError("Name cannot contain , or =");
+            return null;
+        }
+        return name;
     }
 
     /**
