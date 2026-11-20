@@ -1,0 +1,580 @@
+@startuml class-diagram
+!pragma layout smetana
+' Smetana is PlantUML's built-in layout engine
+' Dragon Slayers - class diagram
+' Arrows: --|> extends, ..|> implements, *-- owns (composition), o-- holds (aggregation), ..> uses or creates
+' Visibility: - private, + public, # protected, ~ package-private. {abstract} and {static} as marked.
+
+title Dragon Slayers - class diagram
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+hide empty members
+
+' ============================================================
+package "java (standard library)" #EEEEEE {
+  interface Serializable
+  class JPanel
+  class JFrame
+  class Exception
+  class RuntimeException
+}
+
+' ============================================================
+package com.dragonslayers {
+  class Main {
+    + {static} main(args : String[]) : void
+  }
+}
+
+' ============================================================
+package com.dragonslayers.model {
+
+  interface Attackable {
+    + attack(target : GameCharacter) : int
+  }
+  interface Healable {
+    + heal(amount : int) : void
+  }
+  interface Usable {
+    + useOn(target : GameCharacter) : void
+  }
+  interface Saveable {
+    + toSaveFormat() : String
+  }
+
+  abstract class GameCharacter {
+    - name : String
+    - hp : int
+    - maxHp : int
+    - attack : int
+    - defense : int
+    - speed : int
+    - level : int
+    - isDefending : boolean
+    # GameCharacter(name, maxHp, attack, defense, speed)
+    + {abstract} getClassName() : String
+    + {abstract} useAbility(target : GameCharacter) : int
+    + {abstract} getAbilityName() : String
+    + attack(target : GameCharacter) : int
+    + takeDamage(damage : int) : void
+    + heal(amount : int) : void
+    + defend() : void
+    + stopDefending() : void
+    + isKnockedOut() : boolean
+    + restore(level : int, hp : int) : void
+    # calculateDamage(target : GameCharacter) : int
+    # rollRandomDamage() : int
+    + getName() / getHp() / getMaxHp() / getAttack()
+    + getDefense() / getSpeed() / getLevel() / isDefending()
+    + setAttack(attack : int) / setDefense(defense : int)
+  }
+
+  abstract class Hero {
+    - weapon : Weapon
+    - armor : Armor
+    - abilityUsesLeft : int
+    # Hero(name, maxHp, attack, defense, speed)
+    + getWeapon() : Weapon
+    + getArmor() : Armor
+    ~ equipWeapon(newWeapon : Weapon) : void
+    ~ equipArmor(newArmor : Armor) : void
+    + abilityTargetsAllies() : boolean
+    + getAbilityUsesLeft() : int
+    + getMaxAbilityUses() : int
+    + hasAbilityUses() : boolean
+    + spendAbilityUse() : void
+    + resetAbilityUses() : void
+    + toSaveFormat() : String
+  }
+
+  class Warrior {
+    - {static} POWER_STRIKE_MULTIPLIER : int = 2
+    + Warrior(name : String)
+    + useAbility(target) : int
+  }
+  class Mage {
+    + Mage(name : String)
+    + useAbility(target) : int
+  }
+  class Archer {
+    - {static} DOUBLE_SHOT_HITS : int = 2
+    + Archer(name : String)
+    + useAbility(target) : int
+  }
+  class Cleric {
+    - {static} HEAL_AMOUNT : int = 30
+    + Cleric(name : String)
+    + useAbility(target) : int
+    + abilityTargetsAllies() : boolean
+  }
+
+  abstract class Enemy {
+    - {static} ABILITY_CHANCE : int = 3
+    - lastTarget : GameCharacter
+    - usedAbilityLastTurn : boolean
+    # Enemy(name, maxHp, attack, defense, speed)
+    + takeTurn(heroes : Party<Hero>) : String
+    # shouldUseAbility() : boolean
+    # abilityTargetsSelf() : boolean
+    + getLastTarget() : GameCharacter
+    + usedAbilityLastTurn() : boolean
+  }
+
+  class Goblin {
+    + Goblin(name : String)
+    + useAbility(target) : int
+  }
+  class Skeleton {
+    + Skeleton(name : String)
+    + useAbility(target) : int
+    # abilityTargetsSelf() : boolean
+  }
+  class DragonBoss {
+    - {static} FLAME_BREATH_MULTIPLIER : int = 3
+    - {static} FLAME_BREATH_TURN : int = 3
+    - turnCount : int
+    + DragonBoss(name : String)
+    + useAbility(target) : int
+    # shouldUseAbility() : boolean
+  }
+
+  note bottom of Warrior : every hero and enemy subclass\noverrides getClassName(), useAbility(),\nand getAbilityName()
+
+  abstract class Item {
+    - name : String
+    # Item(name : String)
+    + getName() : String
+  }
+  class Potion {
+    - {static} HEAL_AMOUNT : int = 20
+    + Potion(name : String)
+    + useOn(target) : void
+    + toSaveFormat() : String
+  }
+  abstract class Equipment {
+    - bonus : int
+    # Equipment(name : String, bonus : int)
+    + getBonus() : int
+  }
+  class Weapon {
+    + Weapon(name : String, bonus : int)
+    + useOn(target) : void
+    + toSaveFormat() : String
+  }
+  class Armor {
+    + Armor(name : String, bonus : int)
+    + useOn(target) : void
+    + toSaveFormat() : String
+  }
+  class KeyItem {
+    + KeyItem(name : String)
+    + toSaveFormat() : String
+  }
+
+  class "Party<T extends GameCharacter>" as Party {
+    - members : List<T>
+    + addMember(member : T) : void
+    + getMembers() : List<T>
+    + getAliveMembers() : List<T>
+    + isDefeated() : boolean
+  }
+
+  class Inventory {
+    - items : Map<String, Item>
+    - counts : Map<String, Integer>
+    + addItem(item : Item) : void
+    + addItem(item : Item, count : int) : void
+    + useItem(name : String, target : GameCharacter) : void
+    + getItems() : Map<String, Item>
+    + getCount(name : String) : int
+    + getUsableItemNames() : List<String>
+  }
+
+  class Battle {
+    - {static} BY_SPEED : Comparator<GameCharacter>
+    - heroes : Party<Hero>
+    - enemies : Party<Enemy>
+    - log : List<String>
+    - round : int
+    + Battle(heroes : Party<Hero>, enemies : Party<Enemy>)
+    + getHeroTurnOrder() : List<Hero>
+    + getEnemyTurnOrder() : List<Enemy>
+    + addLog(line : String) : void
+    + getLog() : List<String>
+    + nextRound() : void
+    + getRound() : int
+    + isOver() : boolean
+    + isWon() : boolean
+  }
+
+  class GameState {
+    + {static} FIRST_ENCOUNTER : int = 1
+    - partyName : String
+    - heroes : Party<Hero>
+    - inventory : Inventory
+    - encounter : int
+    - totalRounds : int
+    + GameState(partyName, heroes, inventory, encounter, totalRounds)
+    + GameState(partyName, heroes, inventory)
+    + getPartyName() : String
+    + getTotalRounds() : int
+    + addRounds(rounds : int) : void
+    + getHeroes() : Party<Hero>
+    + getInventory() : Inventory
+    + getEncounter() : int
+    + nextEncounter() : void
+  }
+
+  class LeaderboardEntry {
+    - partyName : String
+    - wins : int
+    - bestRounds : int
+    + LeaderboardEntry(partyName : String, wins : int, bestRounds : int)
+    + LeaderboardEntry(partyName : String, rounds : int)
+    ~ recordWin(rounds : int) : void
+    + getPartyName() : String
+    + getWins() : int
+    + getBestRounds() : int
+  }
+
+  class Leaderboard {
+    - {static} SHOWN_PARTIES : int = 3
+    - {static} BY_RANK : Comparator<LeaderboardEntry>
+    - parties : List<LeaderboardEntry>
+    + recordWin(partyName : String, rounds : int) : void
+    + addEntry(entry : LeaderboardEntry) : void
+    + getTopThreeParties() : List<LeaderboardEntry>
+    + getAllParties() : List<LeaderboardEntry>
+  }
+
+  class HeroFactory <<utility>> {
+    + {static} HERO_CLASSES : List<String>
+    + {static} create(className : String, name : String) : Hero
+  }
+
+  class GameBalance <<constants>> {
+    ~ {static} hero and enemy stats
+    ~ {static} MIN_DAMAGE, DEFENSE_DIVISOR
+    ~ {static} RANDOM_DAMAGE_MAX, DEFEND_DAMAGE_DIVISOR
+    ~ {static} ABILITY_USES_PER_ENCOUNTER
+  }
+}
+
+' ============================================================
+package com.dragonslayers.controller {
+
+  class GameController {
+    + {static} BINARY_FORMAT : String
+    + {static} TEXT_FORMAT : String
+    - gameFrame : GameFrame
+    - binarySaveManager : SaveManager
+    - textSaveManager : SaveManager
+    - leaderboardManager : LeaderboardManager
+    - gameState : GameState
+    - battlePanel : BattlePanel
+    - inventoryPanel : InventoryPanel
+    - endPanel : EndPanel
+    - characterSelectPanel : CharacterSelectPanel
+    + start() : void
+    + showMainMenu() : void
+    + newGame() : void
+    + startGame(heroes : Party<Hero>, partyName : String) : void
+    + loadGame(slot : int, format : String) : void
+    + saveGame(slot : int) : boolean
+    + continueGame() : void
+    + battleEnded(won : boolean, rounds : int) : void
+    + showLeaderboard() : void
+    - recordVictory() : void
+    - startEncounter() : void
+    - showInventory() : void
+  }
+
+  class BattleEngine {
+    - battle : Battle
+    - inventory : Inventory
+    - enemiesThatActed : List<Enemy>
+    - heroOrder : List<Hero>
+    - heroIndex : int
+    + BattleEngine(battle : Battle, inventory : Inventory)
+    + heroAttack(hero : Hero, target : Enemy) : void
+    + checkAbilityUses(hero : Hero) : void
+    + heroAbility(hero : Hero, target : GameCharacter) : void
+    + heroDefend(hero : Hero) : void
+    + heroUseItem(hero : Hero, itemName : String, target : GameCharacter) : void
+    + getCurrentHero() : Hero
+    + getEnemiesThatActed() : List<Enemy>
+    - runEnemyTurns() : void
+    - startRound() : void
+    - endHeroTurn() : void
+  }
+
+  class EncounterFactory <<utility>> {
+    + {static} LAST_ENCOUNTER : int = 5
+    + {static} DRAGON_KEY_NAME : String
+    + {static} create(encounter : int) : Party<Enemy>
+    + {static} createReward(encounter : int) : List<Item>
+  }
+}
+
+' ============================================================
+package com.dragonslayers.io {
+
+  interface SaveManager {
+    + {static} FIRST_SLOT : int = 1
+    + {static} SLOT_COUNT : int = 3
+    + {static} SAVE_FOLDER : String
+    + save(state : GameState, slot : int) : void
+    + load(slot : int) : GameState
+  }
+
+  class BinarySaveManager {
+    + save(state : GameState, slot : int) : void
+    + load(slot : int) : GameState
+    - getFile(slot : int) : File
+  }
+
+  class LeaderboardManager {
+    + save(leaderboard : Leaderboard) : void
+    + load() : Leaderboard
+    - getFile() : File
+  }
+
+  class TextSaveManager {
+    + save(state : GameState, slot : int) : void
+    + load(slot : int) : GameState
+    - getFile(slot : int) : File
+    - createItem(itemDetails : String[]) : Item
+  }
+}
+
+' ============================================================
+package com.dragonslayers.exceptions {
+  class SaveNotFoundException
+  class CorruptedSaveException {
+    + CorruptedSaveException(message : String)
+    + CorruptedSaveException(message : String, cause : Throwable)
+  }
+  class InvalidActionException
+}
+
+' ============================================================
+package com.dragonslayers.view {
+
+  class GameFrame {
+    + {static} MAIN_MENU, CHARACTER_SELECT, BATTLE, INVENTORY, END : String
+    - cardLayout : CardLayout
+    - cards : JPanel
+    + addScreen(screen : JPanel, name : String) : void
+    + showScreen(name : String) : void
+  }
+
+  abstract class BackgroundPanel {
+    # {static} TEXT_COLOR : Color
+    - background : BufferedImage
+    # BackgroundPanel()
+    # paintComponent(g : Graphics) : void
+    # chooseSlot(title : String) : Integer
+    # {static} createTitledScrollPane(content : Component, title : String) : JScrollPane
+  }
+
+  class MainMenuPanel {
+    + MainMenuPanel(gameController : GameController)
+    - chooseSlotAndLoad(gameController : GameController) : void
+  }
+
+  class CharacterSelectPanel {
+    - chosenHeroes : List<Hero>
+    + CharacterSelectPanel(controller : GameController)
+    + reset() : void
+    - chooseHero(className : String) : void
+    - askForName(prompt : String) : String
+    - createParty() : Party<Hero>
+  }
+
+  class BattlePanel {
+    - controller : GameController
+    - canvas : BattleCanvas
+    - battle : Battle
+    - engine : BattleEngine
+    - inventory : Inventory
+    - pendingAction : String
+    + BattlePanel(controller : GameController)
+    + startBattle(battle, engine, inventory, encounter : int) : void
+    - chooseTarget<T extends GameCharacter>(prompt : String, targets : List<T>) : T
+    - toggleTargetChoice(action : String) : void
+    - chooseClickedTarget(x : int, y : int) : void
+    - getValidTargets() : List<? extends GameCharacter>
+    - cancelTargetChoice() : void
+    - playEnemyTurns() : void
+    - refresh() : void
+  }
+
+  class "BattlePanel.ActionButtonListener" as ActionButtonListener <<inner class>> {
+    + actionPerformed(e : ActionEvent) : void
+  }
+
+  class BattleCanvas {
+    - effectTimer : Timer
+    - idleTimer : Timer
+    - idleTick : int
+    - waitingEffects : Queue<Effect>
+    - battle : Battle
+    - currentHero : Hero
+    - targets : List<? extends GameCharacter>
+    + showBattle(battle : Battle, currentHero : Hero) : void
+    + setTargets(targets : List<? extends GameCharacter>) : void
+    + getCharacterAt(x : int, y : int) : GameCharacter
+    + playProjectile(from, to : GameCharacter, spriteName : String) : void
+    # paintComponent(g : Graphics) : void
+    - nextEffectFrame() : void
+    - getBobOffset(character : GameCharacter, row : int) : int
+    - getPlateBounds(character : GameCharacter) : Rectangle
+    - drawCharacter(...) : void
+    - drawEffect(g2 : Graphics2D) : void
+  }
+
+  class "BattleCanvas.Effect" as Effect <<record>> {
+    from : GameCharacter
+    to : GameCharacter
+    spriteName : String
+  }
+
+  class InventoryPanel {
+    - controller : GameController
+    - gameState : GameState
+    + InventoryPanel(controller : GameController)
+    + showState(gameState : GameState) : void
+    - useItem() : void
+    - saveAndQuit() : void
+    - refresh() : void
+  }
+
+  class EndPanel {
+    - saveButton : JButton
+    + EndPanel(controller : GameController)
+    + showResult(won : boolean, partyName : String, totalRounds : int) : void
+  }
+}
+
+' ============================================================
+package com.dragonslayers.assets {
+  class SpriteLoader <<utility>> {
+    - {static} CACHE : Map<String, BufferedImage>
+    + {static} getSprite(name : String) : BufferedImage
+    + {static} getIcon(name : String, scale : int) : ImageIcon
+  }
+}
+
+' ============================== inheritance ==============================
+GameCharacter <|-- Hero
+GameCharacter <|-- Enemy
+Hero <|-- Warrior
+Hero <|-- Mage
+Hero <|-- Archer
+Hero <|-- Cleric
+Enemy <|-- Goblin
+Enemy <|-- Skeleton
+Enemy <|-- DragonBoss
+
+Item <|-- Potion
+Item <|-- Equipment
+Item <|-- KeyItem
+Equipment <|-- Weapon
+Equipment <|-- Armor
+
+Exception <|-- SaveNotFoundException
+Exception <|-- CorruptedSaveException
+RuntimeException <|-- InvalidActionException
+
+JFrame <|-- GameFrame
+JPanel <|-- BackgroundPanel
+JPanel <|-- BattleCanvas
+BackgroundPanel <|-- MainMenuPanel
+BackgroundPanel <|-- CharacterSelectPanel
+BackgroundPanel <|-- BattlePanel
+BackgroundPanel <|-- InventoryPanel
+BackgroundPanel <|-- EndPanel
+
+' ============================== interfaces ==============================
+GameCharacter ..|> Attackable
+GameCharacter ..|> Healable
+GameCharacter ..|> Serializable
+Hero ..|> Saveable
+Item ..|> Saveable
+Item ..|> Serializable
+Potion ..|> Usable
+Equipment ..|> Usable
+Party ..|> Serializable
+Inventory ..|> Serializable
+GameState ..|> Serializable
+BinarySaveManager ..|> SaveManager
+TextSaveManager ..|> SaveManager
+
+' ============================== composition and aggregation ==============================
+GameState *-- "1" Party : heroes
+GameState *-- "1" Inventory
+Party o-- "0..*" GameCharacter : members (T)
+Inventory o-- "0..*" Item : items
+Hero o-- "0..1" Weapon
+Hero o-- "0..1" Armor
+Battle o-- "2" Party : heroes, enemies
+Leaderboard *-- "0..*" LeaderboardEntry : parties
+Enemy --> "0..1" GameCharacter : lastTarget
+
+GameController *-- "1" GameFrame
+GameController *-- "4" BackgroundPanel : screens
+GameController o-- "1" GameState
+GameController o-- "2" SaveManager : binary, text
+GameController *-- "1" LeaderboardManager
+BattleEngine o-- "1" Battle
+BattleEngine o-- "1" Inventory
+GameFrame o-- "5" BackgroundPanel : CardLayout screens
+
+BattlePanel *-- "1" BattleCanvas
+BattlePanel *-- "1" ActionButtonListener
+BattlePanel o-- "1" BattleEngine
+BattleCanvas *-- "0..*" Effect : queue
+BattleCanvas o-- "1" Battle
+
+' ============================== uses / creates ==============================
+Main ..> GameController : starts
+GameController ..> EncounterFactory : uses
+GameController ..> BattleEngine : creates
+EncounterFactory ..> Enemy : creates
+EncounterFactory ..> Item : creates rewards
+HeroFactory ..> Hero : creates
+CharacterSelectPanel ..> HeroFactory : uses
+TextSaveManager ..> HeroFactory : uses
+SaveManager ..> GameState : saves / loads
+SaveManager ..> SaveNotFoundException : throws
+SaveManager ..> CorruptedSaveException : throws
+Inventory ..> InvalidActionException : throws
+BattleEngine ..> InvalidActionException : throws
+LeaderboardManager ..> Leaderboard : saves / loads
+LeaderboardManager ..> CorruptedSaveException : throws
+InventoryPanel ..> GameState : shows
+BackgroundPanel ..> SpriteLoader : uses
+BattleCanvas ..> SpriteLoader : uses
+GameCharacter ..> GameBalance : uses
+
+legend right
+  <b>Legend</b>
+  |= Sign |= Meaning |
+  | + | public |
+  | - | private |
+  | # | protected |
+  | ~ | package-private |
+  | <u>underlined</u> | static |
+  | <i>italic</i> | abstract |
+  | C / A / I | class / abstract class / interface |
+  |= Line |= Meaning |
+  | solid line, hollow triangle | extends (inheritance) |
+  | dashed line, hollow triangle | implements (interface) |
+  | filled diamond | owns (composition) |
+  | hollow diamond | holds (aggregation) |
+  | dashed arrow | uses, creates, or throws |
+  | 1, 0..1, 0..* | how many |
+endlegend
+
+@enduml
