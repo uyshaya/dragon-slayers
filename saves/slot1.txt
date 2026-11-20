@@ -1,0 +1,10 @@
+Party=Earthlanders
+Encounter=5
+Rounds=9
+Hero=Warrior,Eee,1,109
+Hero=Mage,Www,1,43
+Hero=Archer,Rrrr,1,90
+Item=Armor,Leather Armor,5,1
+Item=Weapon,Iron Sword,5,1
+Item=Armor,Cloth Armor,1,1
+Item=Armor,Padded Armor,3,1

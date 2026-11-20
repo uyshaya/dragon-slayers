@@ -29,19 +29,87 @@ You can also open the folder in IntelliJ IDEA and run `com.dragonslayers.Main`.
 
 ## Controls and gameplay
 
-Coming soon.
+The game is played with the mouse. Esc cancels a target choice in battle.
+
+### Screens
+
+1. **Main menu.** New Game, Load Game, Leaderboard, and Quit. Load Game asks for a slot (1 to 3) and a format (binary or text).
+2. **Character select.** Press Choose on a class card and type a name. Pick three heroes. Press Start and name your party.
+3. **Battle.** Your heroes are on the left and the enemies on the right. The hero whose turn it is has a gold frame. The combat log is on the right.
+4. **Inventory and status.** Shown between battles. It lists each hero's stats and equipment and the shared inventory. Use Item equips gear or drinks a potion. Save Game writes the chosen slot in both formats. Next Battle starts the next encounter. Save and Quit saves and closes the game. Main Menu leaves without saving.
+5. **Victory or Game Over.** Victory can save the finished game. Both go back to the main menu.
+
+### Combat
+
+- A battle is played in rounds. In each round every living hero acts once, fastest first. Then every living enemy acts, fastest first.
+- On a hero's turn, pick one action:
+  - **Attack:** press Attack, then click an enemy (red outline).
+  - **Ability:** press Ability, then click a target. Each hero can use its ability 3 times per battle.
+  - **Defend:** takes half damage until the hero's next turn.
+  - **Item:** pick an item and a hero.
+- Pressing Attack or Ability again, or pressing Esc, cancels the target choice. Clicking anywhere else does nothing.
+- Damage is attack, minus half the target's defense, plus a random 0 to 4. It is always at least 1.
+- A character at 0 HP is knocked out. A side loses when all its members are knocked out.
+- Every won battle gives an item. Defeating the dragon gives the Dragon Key.
+
+### Heroes
+
+| Class | HP | Attack | Defense | Speed | Ability |
+|---|---|---|---|---|---|
+| Warrior | 120 | 14 | 10 | 6 | Power Strike: double damage to one enemy |
+| Mage | 70 | 18 | 4 | 8 | Fireball: ignores the enemy's defense |
+| Archer | 90 | 13 | 6 | 14 | Double Shot: attacks one enemy twice |
+| Cleric | 85 | 8 | 7 | 9 | Heal: restores 30 HP to one ally |
+
+### Enemies and encounters
+
+| Enemy | HP | Attack | Defense | Speed | Ability (1 in 3 chance) |
+|---|---|---|---|---|---|
+| Goblin | 40 | 9 | 3 | 11 | Dirty Trick: cancels the hero's defend, then attacks |
+| Skeleton | 60 | 11 | 8 | 5 | Bone Guard: defends itself |
+| Dragon Boss | 300 | 20 | 12 | 7 | Flame Breath: triple damage, every third turn |
+
+| Encounter | Enemies | Reward |
+|---|---|---|
+| 1 | 2 Goblins | Cloth Armor (+1 defense) |
+| 2 | Goblin, Skeleton | Iron Sword (+5 attack) |
+| 3 | 2 Skeletons | Padded Armor (+3 defense) |
+| 4 | 3 Goblins, Skeleton | Leather Armor (+5 defense) |
+| 5 | Dragon Boss | Dragon Key (key item) |
+
+A new armor or weapon replaces the old one's bonus. It does not add to it.
+
+### Saving and the leaderboard
+
+- You can save between battles and on the Victory screen. There are 3 slots. Each save writes `saves/slotN.dat` (binary) and `saves/slotN.txt` (readable text) with the same game.
+- Loading a save that holds the Dragon Key shows the party's result and returns to the main menu.
+- Each dragon win adds a win for the party name. The Leaderboard shows the top three parties: most wins first, then the fewest battle rounds.
+
+### Included test saves
+
+The `saves/` folder has test saves in both formats. Start the game from the project folder, then use Load Game.
+
+| Slot | Files | What it shows |
+|---|---|---|
+| 1 | `slot1.dat`, `slot1.txt` | The party "Earthlanders" before the dragon fight (encounter 5), with the armor and sword rewards in the inventory |
+| 2 | `slot2.dat`, `slot2.txt` | The same party after defeating the dragon, with the Dragon Key. Loading it shows the finished-game message. |
+
+`saves/leaderboard.txt` holds that party's win.
 
 ## Project layout
 
 ```
 src/main/java/com/dragonslayers/
 ├── Main.java      starts the game
-├── model/         characters, items, party, battle
-├── view/          Swing screens
-├── controller/    game flow
+├── model/         characters, items, party, battle, game state, leaderboard
+├── view/          Swing screens and the battle drawing
+├── controller/    game flow, battle engine, encounters
 ├── io/            saving and loading
 ├── exceptions/    custom exceptions
 └── assets/        sprite loading
+assets/sprites/    pixel-art sprites (copied into the JAR)
+saves/             save slots and the leaderboard file
+docs/uml/          class diagram
 ```
 
 ## Feature checklist
@@ -52,60 +120,60 @@ Each row is a requirement from Chapter III of the spec.
 
 | Done | Requirement | Where |
 |---|---|---|
-| ✓ | Abstract class | `GameCharacter`, `Hero`, `Enemy` |
-| ✓ | Two interfaces, each implemented by two or more classes | `Saveable` (`Hero`, items), `Usable` (`Potion`, `Weapon`, `Armor`) |
-| ✓ | Inheritance at least two levels deep | `GameCharacter` → `Hero` → `Warrior` |
-| ✓ | All instance fields private | `GameCharacter` |
-| ✓ | Method overriding with `@Override` | `getClassName()` in each hero and enemy |
-| ✓ | Method overloading | `Inventory.addItem()` |
-| ✓ | Polymorphic battle loop over a supertype collection | `BattleEngine.runEnemyTurns()` |
+| ✓ | Abstract class | `GameCharacter`, `Hero`, `Enemy`, `Item`, `Equipment`, `BackgroundPanel` |
+| ✓ | Two interfaces, each implemented by two or more classes | `Saveable` (`Hero`, and `Potion`, `Weapon`, `Armor`, `KeyItem` through `Item`), `Usable` (`Potion`, `Weapon`, `Armor`), `SaveManager` (`BinarySaveManager`, `TextSaveManager`) |
+| ✓ | Inheritance at least two levels deep | `GameCharacter` → `Hero` → `Warrior`, `Item` → `Equipment` → `Weapon` |
+| ✓ | All instance fields private | every class; values change only through methods such as `takeDamage()`, `heal()`, `restore()`, and `equipWeapon()` |
+| ✓ | Method overriding with `@Override` | `useAbility()`, `getClassName()`, and `getAbilityName()` in every hero and enemy; `shouldUseAbility()` in `DragonBoss`; `abilityTargetsAllies()` in `Cleric`; `toSaveFormat()` in the items |
+| ✓ | Method overloading | `Inventory.addItem(Item)` and `addItem(Item, int)`; the two constructors of `GameState`, `LeaderboardEntry`, and `CorruptedSaveException` |
+| ✓ | Polymorphic battle loop over a supertype collection | `BattleEngine.runEnemyTurns()` loops over a `List<Enemy>` and each enemy's own `useAbility()` and `shouldUseAbility()` run |
 
 ### §2 Collections and generics
 
 | Done | Requirement | Where |
 |---|---|---|
-| ✓ | Two collection types from `java.util` | `ArrayList` in `Party`, `HashMap` in `Inventory` |
-| ✓ | Generic class or method | `Party<T extends GameCharacter>` |
+| ✓ | Two collection types from `java.util` | `ArrayList` in `Party`, `Battle`, and `Leaderboard`; `HashMap` in `Inventory` and `SpriteLoader`; `ArrayDeque` (a `Queue`) in `BattleCanvas` |
+| ✓ | Generic class or method | `Party<T extends GameCharacter>`; the generic method `BattlePanel.chooseTarget()` |
 | ✓ | Sorting with a `Comparator` | `Battle` (`BY_SPEED`), `Leaderboard` (`BY_RANK`: wins, then fewest rounds, with `thenComparingInt`) |
-| ✓ | Non-trivial Stream API use | `Inventory.getUsableItemNames()` |
+| ✓ | Non-trivial Stream API use | `Inventory.getUsableItemNames()` (`filter`, `map`, `sorted`, `collect`), `Battle.getHeroTurnOrder()` (`sorted`), `Leaderboard.recordWin()` (`filter`, `findFirst`) |
 
 ### §3 Exception handling
 
 | Done | Requirement | Where |
 |---|---|---|
-| ✓ | Two custom exceptions | `SaveNotFoundException`, `CorruptedSaveException`, `InvalidActionException` |
-| ✓ | File I/O in try-with-resources or try-catch-finally | `BinarySaveManager`, `TextSaveManager` |
-| ✓ | No empty catch blocks | save managers rethrow as custom exceptions; `GameController.loadGame()` shows a message |
-| ✓ | Failed user actions show a message, not a crash | `BattlePanel` (invalid actions), `CharacterSelectPanel` (bad names), `GameController.loadGame()` (missing or damaged saves) |
+| ✓ | Two custom exceptions | `SaveNotFoundException`, `CorruptedSaveException` (checked), `InvalidActionException` (unchecked) |
+| ✓ | File I/O in try-with-resources or try-catch-finally | `BinarySaveManager`, `TextSaveManager`, `LeaderboardManager` |
+| ✓ | No empty catch blocks | the save managers rethrow as custom exceptions; every screen and `GameController` show a message |
+| ✓ | Failed user actions show a message, not a crash | `BattleEngine.checkAbilityUses()` (no ability uses left), `Inventory.useItem()` (missing or unusable item), `CharacterSelectPanel` (bad names), `GameController.loadGame()` (missing or damaged saves), `GameController.showLeaderboard()` (damaged leaderboard file) |
 
 ### §4 File input and output
 
 | Done | Requirement | Where |
 |---|---|---|
-| ✓ | Human-readable text saves | `TextSaveManager` (`saves/slot1.txt` to `slot3.txt`), `LeaderboardManager` (`saves/leaderboard.txt`) |
-| ✓ | Binary saves with `ObjectOutputStream` | `BinarySaveManager` |
-| ✓ | Corrupted or missing saves handled | `SaveNotFoundException`, `CorruptedSaveException` in `load()` of both save managers |
+| ✓ | Human-readable text saves | `TextSaveManager` (`saves/slot1.txt` to `slot3.txt`): party name, heroes with level and HP, equipment, and items with counts; also `LeaderboardManager` (`saves/leaderboard.txt`) |
+| ✓ | Binary saves with `ObjectOutputStream` | `BinarySaveManager` (`saves/slot1.dat` to `slot3.dat`) |
+| ✓ | Corrupted or missing saves handled | `SaveNotFoundException` and `CorruptedSaveException` in `load()` of both save managers, shown as a message by `GameController.loadGame()` |
 | ✓ | Three save slots | `SaveManager.SLOT_COUNT` |
 
 ### §5 Graphical user interface
 
 | Done | Requirement | Where |
 |---|---|---|
-| ✓ | Swing only | `view` package (`JFrame`, `JPanel`, `JButton`, `JOptionPane`) |
-| ✓ | Three or more screens | `MainMenuPanel`, `CharacterSelectPanel`, `BattlePanel`, `InventoryPanel`, `EndPanel`, switched with `CardLayout` |
-| ✓ | Two or more layout managers | `CardLayout` in `GameFrame`; `GridBagLayout`, `BorderLayout`, `GridLayout`, `FlowLayout` in `MainMenuPanel` |
-| ✓ | Inner class, anonymous class, and lambda event handlers | inner `ActionButtonListener` in `BattlePanel`, anonymous class in `CharacterSelectPanel`, lambdas in `MainMenuPanel` |
-| ✓ | Custom `paintComponent` with `Graphics2D` | `BattleCanvas` draws the arena, sprites, and health bars; `BackgroundPanel` draws the background picture behind every screen |
-| ✓ | Nearest-neighbour sprite scaling | `VALUE_INTERPOLATION_NEAREST_NEIGHBOR` in `BattleCanvas`, `Image.SCALE_REPLICATE` in `SpriteLoader.getIcon()` |
+| ✓ | Swing only | `view` package (`JFrame`, `JPanel`, `JButton`, `JLabel`, `JTextArea`, `JOptionPane`) |
+| ✓ | Three or more screens | `MainMenuPanel`, `CharacterSelectPanel`, `BattlePanel`, `InventoryPanel`, `EndPanel`, switched with `CardLayout` in `GameFrame` |
+| ✓ | Two or more layout managers | `CardLayout` (`GameFrame`), `BorderLayout` (every screen), `GridLayout` (`CharacterSelectPanel`, `MainMenuPanel`), `GridBagLayout` and `FlowLayout` (`MainMenuPanel`) |
+| ✓ | Inner class, anonymous class, and lambda event handlers | inner class `ActionButtonListener` in `BattlePanel`; anonymous classes in `CharacterSelectPanel` (Choose buttons), `BattlePanel` (`MouseAdapter`, Esc `AbstractAction`), and `BattleCanvas` (`MouseMotionAdapter`); lambdas in `MainMenuPanel`, `InventoryPanel`, `EndPanel`, and the `Timer`s |
+| ✓ | Custom `paintComponent` with `Graphics2D` | `BattleCanvas` draws the arena, sprites, health bars, target outlines, and effects; `BackgroundPanel` draws the background behind every screen |
+| ✓ | Nearest-neighbour sprite scaling | `VALUE_INTERPOLATION_NEAREST_NEIGHBOR` in `BattleCanvas` and `BackgroundPanel`, `Image.SCALE_REPLICATE` in `SpriteLoader.getIcon()` |
 
 ### §6 Code quality
 
 | Done | Requirement | Where |
 |---|---|---|
-| | Javadoc on all classes and public methods | |
-| | Naming conventions | |
-| | No class over about 300 lines | |
-| ✓ | No magic numbers | `GameBalance` |
+| ✓ | Javadoc on all classes and public methods | every class, interface, and public method, plus most private methods |
+| ✓ | Naming conventions | PascalCase classes, camelCase methods and variables, UPPER_SNAKE_CASE constants |
+| ✓ | No class over about 300 lines | largest is `BattleCanvas` with about 270 lines of code, not counting comments |
+| ✓ | No magic numbers | shared balance values in `GameBalance`; values used by one class are `private static final` constants in that class |
 | ✓ | Logical packages | `model`, `view`, `controller`, `io`, `exceptions`, `assets` |
 
 ### Bonus
@@ -183,6 +251,7 @@ I used Claude for the following:
 - Wrote the rest of the leaderboard feature at my request: the party name and round total in `GameState` and the text save, `LeaderboardManager`, `recordVictory()`, `showLeaderboard()`, and the finished-save message in `GameController`, the Leaderboard button, and the party name prompt with the shared `askForName()` check.
 - Wrote the ability use limit at my request (3 uses per encounter, `ABILITY_USES_PER_ENCOUNTER` in `GameBalance`): the counter and its methods in `Hero`, `checkAbilityUses()` in `BattleEngine`, which throws `InvalidActionException` when no uses are left, the reset in `startEncounter()`, and the uses shown on each hero's battle plate.
 - Wrote the click-to-target feature at my request: the target choice in `BattlePanel` (`pendingAction`, `chooseClickedTarget()`, `getValidTargets()`, an anonymous `MouseAdapter`, and the Esc key binding) and, in `BattleCanvas`, `getCharacterAt()`, `getPlateBounds()`, the red and green target outlines, and the hand cursor.
+- Wrote the Controls and gameplay section, the Known issues list, and the full feature checklist in this README at my request, after checking each entry against the code.
 
 I wrote all other code myself.
 
@@ -221,4 +290,13 @@ The Tiny Creatures sprites were cut from the pack's `Tilemap/tilemap_packed.png`
 
 ## Known issues
 
-- Hero and item names cannot contain `,` or `=`, because the text save uses them as separators.
+- Hero and party names cannot contain `,` or `=`, because the text save uses them as separators.
+- Party names are case-sensitive on the leaderboard. "herox" and "Herox" count as two parties.
+- Levels never go up. Every hero stays at level 1.
+- A knocked-out hero stays knocked out for the rest of the game. Potions and Heal cannot revive them.
+- An equipped weapon or armor cannot be taken off or moved to another hero. A replaced one is lost.
+- A potion used on a hero at full HP is still used up.
+- The game can only be saved between battles and on the Victory screen, not during a battle.
+- The `saves/` folder is made in the folder the game is started from. Start the game from the project folder to find the included test saves.
+- The animations are only for show. HP bars and the combat log change right away, before the effect reaches its target.
+- Double Shot hits twice but shows one arrow.
