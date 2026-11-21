@@ -4,7 +4,7 @@ A turn-based pixel-art RPG made with Java Swing.
 
 - **Course:** Object-Oriented Programming, University of San Jose - Recoletos
 - **Instructor:** Engr. Violdan E. Bayocot
-- **Submitted:** TBA
+- **Submitted:** November 23, 2026, 12:00 PM PST
 - **Team:** Shaniah Uy (GitHub: [@uyshaya](https://github.com/uyshaya)), solo project
 
 ## How to build and run
@@ -109,7 +109,7 @@ src/main/java/com/dragonslayers/
 └── assets/        sprite loading
 assets/sprites/    pixel-art sprites (copied into the JAR)
 saves/             save slots and the leaderboard file
-docs/uml/          class diagram
+docs/uml/          class diagram (digital and hand-drawn)
 ```
 
 ## Feature checklist
@@ -214,6 +214,7 @@ Each row is a requirement from Chapter III of the spec.
 - Wrote `LeaderboardEntry` (party name, wins, and best rounds, with two constructors and `recordWin()`) and started `Leaderboard` (the `BY_RANK` comparator and `recordWin()`).
 - Designed the ability use limit: each hero can use its ability only a set number of times per encounter, so that Attack is still worth choosing.
 - Designed click-to-target: Attack and Ability targets are chosen by clicking the enemy or ally on the battle screen instead of a dialog, with Esc to cancel.
+- Drew the UML class diagram by hand on four pages (`docs/uml/class-diagram-hand-drawn-page1.png` to `page4.png`).
 
 ## AI usage disclosure
 
@@ -252,6 +253,7 @@ I used Claude for the following:
 - Wrote the ability use limit at my request (3 uses per encounter, `ABILITY_USES_PER_ENCOUNTER` in `GameBalance`): the counter and its methods in `Hero`, `checkAbilityUses()` in `BattleEngine`, which throws `InvalidActionException` when no uses are left, the reset in `startEncounter()`, and the uses shown on each hero's battle plate.
 - Wrote the click-to-target feature at my request: the target choice in `BattlePanel` (`pendingAction`, `chooseClickedTarget()`, `getValidTargets()`, an anonymous `MouseAdapter`, and the Esc key binding) and, in `BattleCanvas`, `getCharacterAt()`, `getPlateBounds()`, the red and green target outlines, and the hand cursor.
 - Wrote the Controls and gameplay section, the Known issues list, and the full feature checklist in this README at my request, after checking each entry against the code.
+- Wrote the digital UML class diagram at my request using PlantUML (`docs/uml/class-diagram.puml` and `class-diagram.png`), and split it into four pages that I used as a guide for the hand-drawn diagram.
 
 I wrote all other code myself.
 
